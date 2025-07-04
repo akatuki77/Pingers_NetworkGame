@@ -1,13 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import Title from '../views/TitleButton.vue' // TitleButton.vueをインポート
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: HomeView,
+      name: 'title',
+      component: Title // TitleButton.vueをルートコンポーネントとして使用
     },
     {
       path: '/about',
