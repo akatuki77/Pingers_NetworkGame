@@ -1,6 +1,13 @@
 <template>
   <div class="relative w-full h-full flex justify-center items-center">
-    <img src="@/assets/background/stage_select_Frame.png" alt="StageFrame" class="w-full h-full object-contain">
+    <div class="w-full h-screen flex flex-col items-center justify-center relative overflow-hidden">
+      <!-- 背面画像 -->
+      <img src="@/assets/background/title_background.png" alt="Background" class="w-full h-full object-cover">
+      <!-- 前面画像 -->
+      <div class="absolute w-[115vw] h-[110vh]">
+        <img src="@/assets/background/stage_select_Frame.png" alt="StageFrame" class="w-full h-full object-contain">
+      </div>
+    </div>
 
     <div class="absolute inset-0 flex pt-8">
       <!-- 左ページ -->
