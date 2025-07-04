@@ -48,7 +48,7 @@ const goToStage = (chapterNumber) => {
 const stages = [
   { number: 1, subtitle: '鍛冶の村編' },
   { number: 2, subtitle: '港町編' },
-  { number: 3, subtitle: '砂漠の国編' },
-  { number: 4, subtitle: '天空都市編' }
+  { number: 3, subtitle: '仲間づくり編' },
+  { number: 4, subtitle: '鬼ヶ島編' }
 ]
 </script>
