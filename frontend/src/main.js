@@ -1,11 +1,10 @@
-import './assets/main.css'
-
+// src/main.js
 import { createApp } from 'vue'
 import App from './App.vue'
-import router from './router'
+import Tres from '@tresjs/core' // TresJSをインポート
 
 const app = createApp(App)
 
-app.use(router)
+app.use(Tres) // プラグインとして登録
 
 app.mount('#app')
