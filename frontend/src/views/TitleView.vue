@@ -23,7 +23,7 @@ let animationId = null;
 
 // ★ ボタンクリック時の関数を追加
 const startGame = () => {
-  router.push('/game'); // ゲーム画面へ遷移
+  router.push('/select-story'); // ストーリー選択に移動
 };
 
 const initTitleScene = () => {

@@ -25,10 +25,8 @@ const init = () => {
 
   // 上から下へのグラデーションを作成
   const gradient = context.createLinearGradient(0, 0, 0, canvas.height);
-  gradient.addColorStop(0, '#a0d8ef'); // 上部の水色
-  gradient.addColorStop(1, '#c2e9fb'); // 下部の薄い水色
-
-  // グラデーションで塗りつぶす
+  gradient.addColorStop(0, '#59c0f3'); // 元: #a0d8ef
+  gradient.addColorStop(1, '#97d7fd'); // 元: #c2e9fb  // グラデーションで塗りつぶす
   context.fillStyle = gradient;
   context.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -51,7 +49,7 @@ const init = () => {
   // ライトの設定
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); // 明るさを調整
   scene.add(ambientLight);
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 5);
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 4);
   directionalLight.position.set(80, 50, -40);
   directionalLight.castShadow = true; // 影を落とす設定
   scene.add(directionalLight);

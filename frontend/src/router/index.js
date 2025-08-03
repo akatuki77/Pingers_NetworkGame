@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import TitleView from '@/views/TitleView.vue'
+import TitleView from '@/views/TitleView.vue'//タイトル画面
+import SelectStory from '@/views/SelectStory.vue'//ストーリ選択画面
+import Content from '@/views/TableContent.vue'//目次の画面
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -9,13 +11,15 @@ const router = createRouter({
       component: TitleView,
     },
     {
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue'),
+      path: '/select-story',
+      name: 'select-story',
+      component: SelectStory,
     },
+    {
+      path: '/content/:id',
+      name: 'content',
+      component: Content,
+    }
   ],
 })
 
