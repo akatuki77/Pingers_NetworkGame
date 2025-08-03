@@ -401,7 +401,7 @@ function updateCharacterPosition(delta) {
         const characterDirection = new THREE.Vector3();
         character.getWorldDirection(characterDirection);
         let isObstacleAhead = false;
-        const stepTolerance = 0.3;
+        const stepTolerance = 0.4;
 
         const collisionPoints = [
             new THREE.Vector3(0, 0.2, 0), new THREE.Vector3(0, 0.8, 0),
