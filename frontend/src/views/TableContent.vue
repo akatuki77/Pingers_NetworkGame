@@ -127,7 +127,7 @@ const selectChapter = (chapter) => {
 };
 
 const onClickSubChapter = () => {
-  router.push(`/`);
+  router.push(`/stageOne`);
 };
 // --- Three.jsの準備 ---
 let renderer, css3dRenderer, scene, camera, model;
