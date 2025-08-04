@@ -212,7 +212,7 @@ function loadObjModel(basePath, mtlFileName, objFileName) {
 function loadModels() {
     Promise.all([
         loadGltfModel('/models/character/bg_clean.glb'),
-        loadObjModel('/models/character/', 'castle.mtl', 'castle.obj')
+        loadObjModel('/models/character/', 'village.mtl', 'village.obj')
     ])
     .then(([gltfBackground, originalCastle]) => {
         background = gltfBackground.scene;
@@ -228,6 +228,7 @@ function loadModels() {
 
         castleLocations.forEach(location => {
             const castle = originalCastle.clone();
+            castle.scale.set(0.6, 0.6, 0.6);
             location.object = castle;
             const rayOrigin = new THREE.Vector3(location.x, 100, location.z);
             raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
