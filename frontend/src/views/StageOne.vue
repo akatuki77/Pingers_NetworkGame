@@ -63,13 +63,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from "vue";
+import { ref, onMounted, onUnmounted, nextTick, watch } from "vue";
 import * as THREE from "three";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import BackButton from "@/components/BackButton.vue";
+import { useCharacterKeymap } from "@/composable/useCharacterKeymap.js";
+import { useCharacter } from "@/composable/useCharacter.js";
+import { useKeyboard } from "@/composable/useKeyboard.js";
 
 // === Vue リアクティブな状態管理 ===
 const canvasContainer = ref(null);
@@ -90,23 +93,16 @@ const feedbackColor = ref("black");
 const explanationText = ref("ステージで学んだことについての説明");
 
 // === three.js関連の変数 (リアクティブにしない) ===
-let scene, camera, renderer, controls, mixer, character, background, backgroundBox;
-let idleAction, walkAction;
+let scene, camera, renderer, controls,  background, backgroundBox;
+// let idleAction, walkAction;
 const collidableObjects = [];
 const clock = new THREE.Clock();
 const raycaster = new THREE.Raycaster();
-const keysPressed = {};
-let currentAction = "idle";
-let targetRotationY = 0;
-const rotationSpeed = 0.1;
-const moveSpeed = 3.0;
-const airMoveSpeed = 2.5;
 
-// 物理関連
-let yVelocity = 0;
-const gravity = -20;
-const jumpStrength = 5;
-let isGrounded = false;
+// composableの呼び出し
+const characterHook = useCharacter();
+const { keysPressed } = useKeyboard();
+useCharacterKeymap(characterHook, keysPressed);
 
 // 衝突したオブジェクトを保持
 let collisionTargetObject = null;
@@ -137,7 +133,6 @@ onUnmounted(() => {
   if (renderer) {
     renderer.dispose();
   }
-  // 他のthree.jsオブジェクトのジオメトリやマテリアルも必要に応じてdispose
 });
 
 // === three.jsのセットアップ ===
@@ -195,6 +190,7 @@ function loadGltfModel(path) {
   });
 }
 
+// OBJとMTLファイルを読み込む関数
 function loadObjModel(basePath, mtlFileName, objFileName) {
     return new Promise((resolve, reject) => {
         const mtlLoader = new MTLLoader();
@@ -209,12 +205,13 @@ function loadObjModel(basePath, mtlFileName, objFileName) {
     });
 }
 
+// モデルの読み込みとシーンへの追加
 function loadModels() {
     Promise.all([
         loadGltfModel('/models/character/bg_clean.glb'),
         loadObjModel('/models/character/', 'castle.mtl', 'castle.obj')
     ])
-    .then(([gltfBackground, originalCastle]) => {
+    .then(async ([gltfBackground, originalCastle]) => {
         background = gltfBackground.scene;
         background.traverse(child => {
             if (child.isMesh) {
@@ -238,6 +235,8 @@ function loadModels() {
             collidableObjects.push(castle);
         });
 
+        await characterHook.loadCharacter(scene);
+
         // ★ [追加] 常時表示ラベルを初期化
         persistentLabels.value = castleLocations.map(loc => ({
           text: loc.location, // 村の名前を設定
@@ -246,235 +245,80 @@ function loadModels() {
           visible: true,
           sourceObject: loc.object
         }));
-
-        loadCharacter();
-    });
-}
-
-function loadCharacter() {
-    const loader = new GLTFLoader();
-    loader.load('/models/character/momotaro.glb', (gltf) => {
-        character = gltf.scene;
-        character.scale.set(0.6, 0.6, 0.6);
-        character.position.set(0.2, 2.4, 12.1);
-        character.rotation.y = Math.PI;
-        character.traverse(child => {
-            if (child.isMesh) child.castShadow = true;
-        });
-        scene.add(character);
-
-        mixer = new THREE.AnimationMixer(character);
-        const idleClip = THREE.AnimationClip.findByName(gltf.animations, 'idle');
-        const walkClip = THREE.AnimationClip.findByName(gltf.animations, 'walk');
-        if (idleClip && walkClip) {
-            idleAction = mixer.clipAction(idleClip);
-            walkAction = mixer.clipAction(walkClip);
-            idleAction.play();
-        }
     });
 }
 
 // === イベントリスナー ===
 function setupEventListeners() {
     window.addEventListener('resize', onWindowResize);
-    document.addEventListener('keydown', onKeyDown);
-    document.addEventListener('keyup', onKeyUp);
 }
 
+// イベントリスナーのクリーンアップ
 function cleanupEventListeners() {
     window.removeEventListener('resize', onWindowResize);
-    document.removeEventListener('keydown', onKeyDown);
-    document.removeEventListener('keyup', onKeyUp);
 }
 
+// === ウィンドウリサイズ時の処理 ===
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-function onKeyDown(event) {
-    keysPressed[event.key.toLowerCase()] = true;
+// Enterキーで回答モーダルを開く
+watch(() => keysPressed.value['enter'], (isPressed) => {
+  if (isPressed && !isAnswerModalVisible.value) { // モーダルが既に開いていなければ
+    isAnswerModalVisible.value = true;
+    nextTick(() => {
+      if(answerInput.value) answerInput.value.focus();
+    });
+  }
+});
 
-    if (event.code === 'Space' && isGrounded) {
-        yVelocity = jumpStrength;
-        isGrounded = false;
-    }
+// Escapeキーでモーダルを閉じる
+watch(() => keysPressed.value['escape'], (isPressed) => {
+  if (isPressed) {
+    isAnswerModalVisible.value = false;
+    isExplanationModalVisible.value = false;
+  }
+});
 
-    if (['w', 'a', 's', 'd'].includes(event.key.toLowerCase())) {
-        if (currentAction !== 'walk' && idleAction && walkAction) {
-            switchToAction(idleAction, walkAction);
-            currentAction = 'walk';
-        }
-    }
-
-    if (event.key === 'Enter') {
-        event.preventDefault();
-        isAnswerModalVisible.value = true;
-        nextTick(() => { // DOMが更新された後にフォーカスを当てる
-           if(answerInput.value) answerInput.value.focus();
-        });
-    }
-
-    if (event.key === 'Escape') {
-        isAnswerModalVisible.value = false;
-        isExplanationModalVisible.value = false;
-    }
-}
-
-function onKeyUp(event) {
-    keysPressed[event.key.toLowerCase()] = false;
-    if (!keysPressed['w'] && !keysPressed['a'] && !keysPressed['s'] && !keysPressed['d']) {
-        if (currentAction === 'walk' && idleAction && walkAction) {
-            switchToAction(walkAction, idleAction);
-            currentAction = 'idle';
-        }
-    }
-}
-
-// === アニメーションと物理演算 ===
-function switchToAction(from, to) {
-    from.fadeOut(0.25);
-    to.reset().fadeIn(0.25).play();
-}
-
+// アニメーションループ
 function animate() {
     animationFrameId = requestAnimationFrame(animate);
     const delta = clock.getDelta();
 
-    if (mixer) mixer.update(delta);
+    if (characterHook.mixer) characterHook.mixer.update(delta);
 
-    if (character && background) {
-        updateCharacterPosition(delta);
-        updateSpeechBubble();
-        updatePersistentLabels(); // ★ [追加] 常時ラベルの位置を更新
+    if (characterHook.character && background) {
+        const hitInfo = characterHook.updatePosition({
+      delta,
+      keysPressed: keysPressed.value,
+      raycaster,
+      collidableObjects,
+      castleLocations,
+      backgroundBox
+    });
+
+    // 衝突結果に応じて吹き出しを更新
+    if (hitInfo) {
+      speechBubble.value.visible = true;
+      speechBubble.value.text = hitInfo.name;
+      collisionTargetObject = hitInfo.object;
+    } else {
+      speechBubble.value.visible = false;
+      collisionTargetObject = null;
     }
+
+    updateSpeechBubble();
+    updatePersistentLabels();
+  }
 
     controls.update();
     renderer.render(scene, camera);
 }
 
-function updateCharacterPosition(delta) {
-    // （元の長いロジックをここに移植）
-    // ... updateCharacterPositionのロジックは長いため、元のコードのanimate関数内から
-    //    characterとbackgroundのifブロックの中身をほぼそのままここに持ってきます。
-    //    ただし、DOM操作はVueのリアクティブな変数更新に置き換えます。
-
-    // --- 重力と地面との接地判定 ---
-    const groundRayOrigin = character.position.clone();
-    groundRayOrigin.y += 0.5;
-    raycaster.set(groundRayOrigin, new THREE.Vector3(0, -1, 0));
-    const groundIntersects = raycaster.intersectObjects(collidableObjects, true);
-
-    if (groundIntersects.length > 0) {
-        const groundY = groundIntersects[0].point.y;
-        if (character.position.y <= groundY + 0.1 && yVelocity <= 0) {
-            character.position.y = groundY;
-            yVelocity = 0;
-            isGrounded = true;
-        } else {
-            isGrounded = false;
-        }
-    } else {
-        isGrounded = false;
-    }
-
-    if (!isGrounded) {
-        yVelocity += gravity * delta;
-    }
-    character.position.y += yVelocity * delta;
-
-    // --- 移動と前方衝突判定 ---
-    // ★ ここからロジックを大幅に変更
-    const isMoving = keysPressed['w'] || keysPressed['a'] || keysPressed['s'] || keysPressed['d'];
-    let hitCastleInfo = null;
-
-    if(isMoving) {
-        if (keysPressed['w']) targetRotationY = -Math.PI / 2;
-        if (keysPressed['s']) targetRotationY = Math.PI / 2;
-        if (keysPressed['a']) targetRotationY = 0;
-        if (keysPressed['d']) targetRotationY = Math.PI;
-
-        const targetQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, targetRotationY, 0));
-        character.quaternion.slerp(targetQuaternion, rotationSpeed);
-
-        const characterDirection = new THREE.Vector3();
-        character.getWorldDirection(characterDirection);
-        let isObstacleAhead = false;
-        const stepTolerance = 0.4;
-
-        const collisionPoints = [
-            new THREE.Vector3(0, 0.2, 0), new THREE.Vector3(0, 0.8, 0),
-            new THREE.Vector3(0.3, 0.5, 0), new THREE.Vector3(-0.3, 0.5, 0),
-            new THREE.Vector3(0, 1.5, 0)
-        ];
-
-        for (const point of collisionPoints) {
-            const rayOrigin = point.clone().applyMatrix4(character.matrixWorld);
-            raycaster.set(rayOrigin, characterDirection);
-            const intersects = raycaster.intersectObjects(collidableObjects, true);
-
-            if (intersects.length > 0 && intersects[0].distance < 0.5) {
-                const hitObject = intersects[0].object;
-                const foundCastle = castleLocations.find(info => info.object.children.includes(hitObject) || info.object.id === hitObject.id);
-                if (foundCastle) {
-                    hitCastleInfo = foundCastle;
-                }
-                const heightDifference = intersects[0].point.y - character.position.y;
-                if (Math.abs(heightDifference) > stepTolerance) {
-                    isObstacleAhead = true;
-                    break;
-                }
-            }
-        }
-
-        let isCliffAhead = false;
-        if (isGrounded) {
-             const cliffRayOrigin = new THREE.Vector3(
-                character.position.x + characterDirection.x * 0.4,
-                character.position.y + 1.0,
-                character.position.z + characterDirection.z * 0.4
-            );
-            raycaster.set(cliffRayOrigin, new THREE.Vector3(0, -1, 0));
-            const cliffIntersects = raycaster.intersectObjects(collidableObjects, true);
-            if (cliffIntersects.length === 0 || cliffIntersects[0].point.y < character.position.y - stepTolerance) {
-                isCliffAhead = true;
-            }
-        }
-
-        if (!isObstacleAhead && !isCliffAhead) {
-            const currentMoveSpeed = isGrounded ? moveSpeed : airMoveSpeed;
-            const moveDistance = currentMoveSpeed * delta;
-            const moveVector = new THREE.Vector3(0, 0, moveDistance).applyQuaternion(character.quaternion);
-            const newPosition = character.position.clone().add(moveVector);
-            const finalGroundRayOrigin = newPosition.clone();
-            finalGroundRayOrigin.y += 1.0;
-            raycaster.set(finalGroundRayOrigin, new THREE.Vector3(0, -1, 0));
-            const finalGroundIntersects = raycaster.intersectObjects(collidableObjects, true);
-            let isDestinationOK = false;
-            if (finalGroundIntersects.length > 0) {
-                if (Math.abs(finalGroundIntersects[0].point.y - character.position.y) < stepTolerance) {
-                    isDestinationOK = true;
-                }
-            }
-            if (isDestinationOK && backgroundBox.containsPoint(newPosition)) {
-                character.position.copy(newPosition);
-            }
-        }
-    }
-
-    // --- ★ 吹き出しのターゲットとテキストを決定するロジック ---
-    if (hitCastleInfo) {
-        // 衝突時: ターゲットを衝突した城に設定し、テキストを `name` にする
-        speechBubble.value.visible = true;
-        speechBubble.value.text = hitCastleInfo.name; // 住所(name)を表示
-        collisionTargetObject = hitCastleInfo.object;
-    } else {
-        speechBubble.value.visible = false;
-        collisionTargetObject = null;
-    }
-}
-
+// === 衝突判定と吹き出しの更新 ===
 function updateSpeechBubble() {
     // 追跡対象がない場合は何もしない
      if (!speechBubble.value.visible || !collisionTargetObject) return;
@@ -491,7 +335,7 @@ function updateSpeechBubble() {
     speechBubble.value.y = -(vector.y * heightHalf) + heightHalf;
 }
 
-// ★ 常時表示ラベルの位置を更新する関数
+// 常時表示ラベルの位置を更新する関数
 function updatePersistentLabels() {
   if (!camera) return;
 
@@ -505,9 +349,6 @@ function updatePersistentLabels() {
     label.sourceObject.updateMatrixWorld();
     vector.setFromMatrixPosition(label.sourceObject.matrixWorld).add(new THREE.Vector3(0, 2.5, 0));
     vector.project(camera);
-
-    // カメラの後ろにある場合は表示しないなどの調整も可能
-    // label.visible = vector.z < 1;
 
     label.x = (vector.x * widthHalf) + widthHalf;
     label.y = -(vector.y * heightHalf) + heightHalf;
@@ -523,6 +364,7 @@ function displayQuestion() {
     isCorrect.value = false;
 }
 
+// 回答の提出
 function submitAnswer() {
     if (!userAnswer.value) return;
     const correctAnswer = castleLocations[currentQuestionIndex].name;
@@ -536,20 +378,20 @@ function submitAnswer() {
     }
 }
 
+// 解説モーダルの表示
 function showExplanation() {
     explanationText.value = '鍛冶の村の住所は２丁目３−３５です。'; // 本来は動的に設定
     isExplanationModalVisible.value = true;
     isAnswerModalVisible.value = false;
 }
 
+// 解説モーダルの閉じるボタン
 function closeExplanation() {
     isExplanationModalVisible.value = false;
 }
-
 </script>
 
 <style>
-/* 元のCSSをそのままここにコピー */
 body {
   margin: 0;
   overflow: hidden; /* スクロールバーを非表示 */
