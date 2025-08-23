@@ -216,42 +216,65 @@ function loadObjModel(basePath, mtlFileName, objFileName) {
 // モデルの読み込みとシーンへの追加
 function loadModels() {
     Promise.all([
-        loadGltfModel('/models/character/bg_clean.glb'),
-        loadObjModel('/models/character/', 'village.mtl', 'village.obj')
+        // loadGltfModel('/models/character/bg_clean.glb'),
+        loadObjModel('/models/character/', 'background_village.mtl', 'background_village.obj'),
+        loadObjModel('/models/character/', 'village.mtl', 'village.obj'),
+        loadObjModel('/models/character/', 'village_lake.mtl', 'village_lake.obj'),
+        loadGltfModel('/models/character/flower.glb'),
     ])
-    .then(async ([gltfBackground, loadedVillage]) => {
-        background = gltfBackground.scene;
-        background.traverse(child => {
-            if (child.isMesh) {
-                child.receiveShadow = true;
-                child.castShadow = true;
-            }
-        });
+    .then(async ([Background, loadedVillage, loadedLake, loadedFlower]) => {
+        // 背景モデルの設定
+        background = Background;
         scene.add(background);
         collidableObjects.push(background);
-        backgroundBox = new THREE.Box3().setFromObject(background);
 
+        let rayOrigin, intersects, groundY;
+
+        // 村のモデルを配置
         castleLocations.forEach(location => {
             const village = loadedVillage.clone();
-            village.userData.isWall = true;
             village.scale.set(0.5, 0.5, 0.5);
             location.object = village;
-            const rayOrigin = new THREE.Vector3(location.x, 100, location.z);
+            rayOrigin = new THREE.Vector3(location.x, 100, location.z);
             raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
-            const intersects = raycaster.intersectObject(background, true);
-            const groundY = intersects.length > 0 ? intersects[0].point.y : 0;
+            intersects = raycaster.intersectObject(background, true);
+            groundY = intersects.length > 0 ? intersects[0].point.y : 0;
             village.position.set(location.x, groundY, location.z);
             scene.add(village);
             collidableObjects.push(village);
-
-            village.traverse(child => {
-              if (child.isMesh) {
-                child.castShadow = true;
-                child.receiveShadow = true;
-              }
-            });
         });
 
+        // 湖のモデルを配置
+        const lakePosition = { x: 0, y: 0, z: 0 };
+        rayOrigin = new THREE.Vector3(lakePosition.x, 100, lakePosition.z);
+        raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
+        intersects = raycaster.intersectObject(background, true);
+        groundY = intersects.length > 0 ? intersects[0].point.y : 0;
+        loadedLake.position.set(lakePosition.x, groundY - 2.15, lakePosition.z);
+        scene.add(loadedLake);
+        collidableObjects.push(loadedLake);
+
+        // 花のモデルを配置
+        const flower = loadedFlower.scene.clone();
+        const flowerPosition = { x: 0.4, y: 0, z: 0.5 };
+        rayOrigin = new THREE.Vector3(flowerPosition.x, 100, flowerPosition.z);
+        raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
+        intersects = raycaster.intersectObject(background, true);
+        groundY = intersects.length > 0 ? intersects[0].point.y : 0;
+        flower.position.set(flowerPosition.x, groundY - 2.4, flowerPosition.z);
+        flower.rotation.y = -6.2; // 少し回転させる
+        scene.add(flower);
+        collidableObjects.push(flower);
+
+        scene.traverse(child => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+            child.userData.isWall = true;
+          }
+        });
+
+        backgroundBox = new THREE.Box3().setFromObject(background);
         await characterHook.loadCharacter(scene);
 
         // ★ [追加] 常時表示ラベルを初期化
