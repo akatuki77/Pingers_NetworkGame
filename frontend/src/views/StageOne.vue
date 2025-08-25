@@ -242,17 +242,22 @@ function loadModels() {
             village.position.set(location.x, groundY, location.z);
             scene.add(village);
             collidableObjects.push(village);
+
+            village.traverse(child => {
+              if (child.isMesh) {
+                child.userData.isWall = true;
+              }
+            });
         });
 
         // 湖のモデルを配置
-        const lakePosition = { x: 0, y: 0, z: 0 };
+        const lakePosition = { x: -0.05, y: 0, z: 0 };
         rayOrigin = new THREE.Vector3(lakePosition.x, 100, lakePosition.z);
         raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
         intersects = raycaster.intersectObject(background, true);
         groundY = intersects.length > 0 ? intersects[0].point.y : 0;
-        loadedLake.position.set(lakePosition.x, groundY - 2.15, lakePosition.z);
+        loadedLake.position.set(lakePosition.x, groundY - 2.5, lakePosition.z);
         scene.add(loadedLake);
-        collidableObjects.push(loadedLake);
 
         // 花のモデルを配置
         const flower = loadedFlower.scene.clone();
@@ -270,7 +275,6 @@ function loadModels() {
           if (child.isMesh) {
             child.castShadow = true;
             child.receiveShadow = true;
-            child.userData.isWall = true;
           }
         });
 
@@ -440,9 +444,17 @@ function closeExplanation() {
 </script>
 
 <style>
+@font-face {
+  font-family: 'azuki-font';
+  /* @/ は src/ フォルダを指す便利なエイリアス（別名）です。
+    これを使うことで、CSSファイルがどこにあっても常に正しいパスを指定できます。
+  */
+  src: url('@/assets/fonts/azuki.ttf') format('truetype');
+}
 body {
   margin: 0;
   overflow: hidden; /* スクロールバーを非表示 */
+  font-family: 'azuki-font', sans-serif; /* フォントを適用 */
 }
 
 .persistent-label, #speech-bubble {
@@ -562,14 +574,14 @@ body {
 #key-guide {
   position: absolute;
   bottom: 30px;
-  left: 70%;
-  transform: translateX(-50%);
-  background-color: rgba(0, 0, 0, 0.5);
-  color: white;
+  left: 53%;
+  transform: translateX(0%);
+  /* background-color: rgba(0, 0, 0, 0.5); */
+  /* color: white; */
+  color: black;
   padding: 10px 20px;
   border-radius: 10px;
-  font-family: sans-serif;
-  font-size: 16px;
+  font-size: 30px;
   z-index: 10;
 }
 
@@ -583,5 +595,6 @@ body {
   box-shadow: 0 2px 0 #aaa;
   font-weight: bold;
   margin: 0 2px;
+  font-family: inherit;
 }
 </style>
