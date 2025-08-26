@@ -33,36 +33,39 @@
 
     <div id="answer-modal" :class="{ hidden: !isAnswerModalVisible }">
       <div id="modal-content">
-        <template v-if="!isCorrect">
-          <input
-            ref="answerInput"
-            type="text"
-            v-model="userAnswer"
-            placeholder="答えを入力"
-            @keydown.enter="submitAnswer"
-          />
-          <button @click="submitAnswer">回答</button>
-        </template>
-        <button v-if="isCorrect" @click="showExplanation">
-          解説を見る
-        </button>
-        <p id="feedback-text" :style="{ color: feedbackColor }">
-          {{ feedbackText }}
-        </p>
+        <div id="question-modal-text">
+          <template v-if="!isCorrect">
+            <input
+              ref="answerInput"
+              type="text"
+              v-model="userAnswer"
+              placeholder="答えを入力"
+              @keydown.enter="submitAnswer"
+            />
+            <button @click="submitAnswer">回答</button>
+          </template>
+          <button v-if="isCorrect" @click="showExplanation">
+            解説を見る
+          </button>
+          <p id="feedback-text" :style="{ color: feedbackColor }">
+            {{ feedbackText }}
+          </p>
+        </div>
       </div>
     </div>
 
     <div id="explanation-modal" class="modal" :class="{ hidden: !isExplanationModalVisible }">
       <div class="modal-content">
-        <h2>クリア！</h2>
-        <p id="explanation-text">{{ explanationText }}</p>
+        <div id="question-modal-text">
+          <h2>クリア！</h2>
+          <p id="explanation-text">{{ explanationText }}</p>
+        </div>
         <button @click="closeExplanation">閉じる</button>
       </div>
     </div>
 
     <div id="key-guide">
-      <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> : 移動
-      <kbd>Space</kbd> : ジャンプ <kbd>Enter</kbd> : 回答入力
+      <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> 移動  <kbd>Space</kbd> ジャンプ  <kbd>Enter</kbd> 回答入力
     </div>
   </div>
 
@@ -118,9 +121,9 @@ let collisionTargetObject = null;
 // クイズ情報
 let currentQuestionIndex = 1;
 const castleLocations = [
-    { name: "２丁目６−１１", location: "花の村", x: -0.7, z: -7.5, object: null },
-    { name: "２丁目３−３５", location: "鍛冶の村", x: 8, z: -6, object: null },
-    { name: "２丁目１−６", location: "商人の村", x: -9.5, z: -6.5, object: null }
+    { name: "２丁目６ー１１", location: "花の村", x: -0.7, z: -7.5, object: null },
+    { name: "２丁目３ー３５", location: "鍛冶の村", x: 8, z: -6, object: null },
+    { name: "２丁目１ー６", location: "商人の村", x: -9.5, z: -6.5, object: null }
 ];
 let animationFrameId;
 
@@ -243,11 +246,7 @@ function loadModels() {
             scene.add(village);
             collidableObjects.push(village);
 
-            village.traverse(child => {
-              if (child.isMesh) {
-                child.userData.isWall = true;
-              }
-            });
+
         });
 
         // 湖のモデルを配置
@@ -432,7 +431,20 @@ function submitAnswer() {
 
 // 解説モーダルの表示
 function showExplanation() {
-    explanationText.value = '鍛冶の村の住所は２丁目３−３５です。'; // 本来は動的に設定
+    explanationText.value = '鍛冶の村の住所は「２丁目３番３５号」だね！\n\n' +
+                          '実は、このお話はネットワークの世界とそっくりなんだ。\n' +
+                          '君が操作していた桃太郎は、情報を運ぶ小さなデータ「パケット」。\n' +
+                          'そして、目的地の「鍛冶の村」は、パケットが届けられる「宛先」なんだよ。\n\n' +
+                          '手紙に住所が必要なように、パケットを正確に届けるためにも「IPアドレス」という住所が絶対に必要になるんだ。\n' +
+                          '君が正しい住所を見つけられたから、桃太郎は鍛冶の村にたどり着けたんだね！';
+
+    // explanationText.value = 'クリアおめでとう！鍛冶の村の住所を見事に突き止めたね！\n\n' +
+    // 'さて、ここで種明かしだ。君が体験した冒険は、インターネットの世界で毎日起きていることなんだ。\n' +
+    // '主人公の桃太郎は、ネットワークを旅する情報の主人公「パケット」。\n' +
+    // 'そして桃太郎が目指した「鍛冶の村」は、データの届け先である「宛先」。\n\n' +
+    // '君が村の住所を探し当てたように、ネットワークの世界でも「IPアドレス」という正しい住所をパケットに教えてあげないと、情報は迷子になってしまうんだ。\n' +
+    // '君は、立派なネットワークの案内人だ！';
+
     isExplanationModalVisible.value = true;
     isAnswerModalVisible.value = false;
 }
@@ -501,7 +513,7 @@ body {
   z-index: 10;
   border: 1px solid #ccc;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 25px;
   font-weight: bold;
 }
 
