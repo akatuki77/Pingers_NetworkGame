@@ -4,7 +4,10 @@
   <div class="content-overlay">
     <div ref="titleContainer" class="title-canvas-container"></div>
 
-    <button @click="startGame" class="start-button">はじめる</button>
+    <div class="button-container">
+      <button @click="startGame" class="start-button">はじめる</button>
+      <button @click="goToGlossary" class="glossary-button">用語解説</button>
+    </div>
   </div>
 </template>
 
@@ -21,9 +24,13 @@ const titleContainer = ref(null);
 let renderer, scene, camera, model;
 let animationId = null;
 
-// ★ ボタンクリック時の関数を追加
 const startGame = () => {
   router.push('/select-story'); // ストーリー選択に移動
+};
+
+// ★ 用語解説ページに移動する関数を追加
+const goToGlossary = () => {
+  router.push('/glossary'); // 用語解説ページに移動
 };
 
 const initTitleScene = () => {
@@ -31,7 +38,6 @@ const initTitleScene = () => {
   if (!container) return;
 
   scene = new THREE.Scene();
-  // ★ カメラのアスペクト比を描画領域に合わせる
   camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
 
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -56,11 +62,11 @@ const initTitleScene = () => {
         '/models/title/GameTitle-v2.obj',
         (obj) => {
           model = obj;
-          model.scale.set(2, 2, 2); // スケールを調整
+          model.scale.set(2, 2, 2);
           scene.add(model);
 
-          camera.position.set(0, 5, 8);//カメラの位置
-          camera.lookAt(0, 3, 0); //カメラの向き
+          camera.position.set(0, 5, 8);
+          camera.lookAt(0, 3, 0);
         }
       );
     }
@@ -112,10 +118,17 @@ onUnmounted(() => {
   height: 100%;
 }
 
-/* ★ ボタンのスタイルを追加 */
-.start-button {
+/* ★ ボタンをまとめるコンテナのスタイル */
+.button-container {
   position: absolute;
-  bottom: 25%;
+  bottom: 15%; /* 少し位置を調整 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem; /* ボタン間の余白 */
+}
+
+.start-button {
   padding: 12px 48px;
   font-size: 2.5em;
   font-weight: bold;
@@ -129,6 +142,23 @@ onUnmounted(() => {
 }
 .start-button:hover {
   background-color: white;
+  color: black;
+}
+
+/* ★ 用語解説ボタンのスタイルを追加 */
+.glossary-button {
+  padding: 10px 40px;
+  font-size: 1.5em;
+  font-weight: bold;
+  color: white;
+  background-color: transparent;
+  border: 2px solid white;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.glossary-button:hover {
+  background-color: rgba(255, 255, 255, 0.8);
   color: black;
 }
 </style>
