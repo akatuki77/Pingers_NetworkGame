@@ -31,41 +31,12 @@
       </div>
     </div>
 
-    <div id="answer-modal" :class="{ hidden: !isAnswerModalVisible }">
-      <div id="modal-content">
-        <div id="question-modal-text">
-          <template v-if="!isCorrect">
-            <input
-              ref="answerInput"
-              type="text"
-              v-model="userAnswer"
-              placeholder="答えを入力"
-              @keydown.enter="submitAnswer"
-            />
-            <button @click="submitAnswer">回答</button>
-          </template>
-          <button v-if="isCorrect" @click="showExplanation">
-            解説を見る
-          </button>
-          <p id="feedback-text" :style="{ color: feedbackColor }">
-            {{ feedbackText }}
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <div id="explanation-modal" class="modal" :class="{ hidden: !isExplanationModalVisible }">
-      <div class="modal-content">
-        <div id="question-modal-text">
-          <h2>クリア！</h2>
-          <p id="explanation-text">{{ explanationText }}</p>
-        </div>
-        <button @click="closeExplanation">閉じる</button>
-      </div>
-    </div>
-
     <div id="key-guide">
-      <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> 移動  <kbd>Space</kbd> ジャンプ  <kbd>Enter</kbd> 回答入力
+      <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> 移動  <kbd>Space</kbd> ジャンプ
+    </div>
+
+    <div v-if="isTransitionButtonVisible" class="transition-button-container">
+      <button @click="goToStageTwoTwo">2-2へ進む</button>
     </div>
   </div>
 
@@ -73,25 +44,22 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick, watch } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import * as THREE from "three";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
-// import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import BackButton from "@/components/BackButton.vue";
 import { useCharacterKeymap } from "@/composable/useCharacterKeymap.js";
 import { useCharacter } from "@/composable/useCharacter.js";
 import { useKeyboard } from "@/composable/useKeyboard.js";
+import { useRouter } from 'vue-router';
 
 // === Vue リアクティブな状態管理 ===
 const canvasContainer = ref(null);
-const answerInput = ref(null);
 
 // UIの状態
 const speechBubble = ref({ visible: false, text: "", x: 0, y: 0 });
-const isAnswerModalVisible = ref(false);
-const isExplanationModalVisible = ref(false);
 const isCorrect = ref(false);
 const persistentLabels = ref([]); // ★ [追加] 常時表示ラベル用の配列
 const isQuestionModalVisible = ref(false);
@@ -100,11 +68,9 @@ const isQuestionModalVisible = ref(false);
 const questionText = ref("");
 const userAnswer = ref("");
 const feedbackText = ref("");
-const feedbackColor = ref("black");
-const explanationText = ref("ステージで学んだことについての説明");
 
 // === three.js関連の変数 (リアクティブにしない) ===
-let scene, camera, renderer, controls,  background, backgroundBox, background2;
+let scene, camera, renderer, controls,  background, backgroundBox, background2, triggerZoneBox;
 // let idleAction, walkAction;
 const collidableObjects = [];
 const clock = new THREE.Clock();
@@ -119,13 +85,16 @@ useCharacterKeymap(characterHook, keysPressed);
 let collisionTargetObject = null;
 
 // クイズ情報
-let currentQuestionIndex = 1;
 const castleLocations = [
-    { name: "２丁目６ー１１", location: "花の村", x: -0.7, z: -7.5, object: null },
-    { name: "２丁目３ー３５", location: "鍛冶の村", x: 8, z: -6, object: null },
-    { name: "２丁目１ー６", location: "商人の村", x: -9.5, z: -6.5, object: null }
+    { name: "住所が２丁目３ー３５である関所に行けば、港町へ辿り着けるであろう。", location: "関所Aの門番", x: -1, z: -5, object: null },
 ];
 let animationFrameId;
+
+const router = useRouter(); // ★ routerインスタンスを取得
+const isTransitionButtonVisible = ref(false); // ★ ボタンの表示状態を管理
+
+// 2-2へ遷移ボタンのキャラクターの当たり判定用の箱を準備
+const characterBox = new THREE.Box3();
 
 // === 初期化処理 ===
 onMounted(() => {
@@ -194,13 +163,6 @@ function initThree() {
   scene.add(directionalLight);
 }
 
-// // === モデル読み込み ===
-// function loadGltfModel(path) {
-//   return new Promise((resolve, reject) => {
-//     new GLTFLoader().load(path, resolve, undefined, reject);
-//   });
-// }
-
 // OBJとMTLファイルを読み込む関数
 function loadObjModel(basePath, mtlFileName, objFileName) {
     return new Promise((resolve, reject) => {
@@ -246,6 +208,21 @@ function loadModels() {
         scene.add(background2);
         collidableObjects.push(background2);
 
+        // 2つの背景のつなぎ目に「見えないゾーン」を作成
+        const zonePositionZ = -background1Size.z / 2; // つなぎ目のZ座標
+        // ゾーンのジオメトリ（幅、高さ、奥行き）
+        const zoneGeometry = new THREE.BoxGeometry(background1Size.x, 10, 2);
+        // ゾーンのマテリアル（透明にする）
+        const zoneMaterial = new THREE.MeshBasicMaterial({ visible: false });
+        const triggerZone = new THREE.Mesh(zoneGeometry, zoneMaterial);
+
+        // ゾーンをつなぎ目に配置
+        triggerZone.position.set(0, 5, zonePositionZ);
+        scene.add(triggerZone);
+
+        // ゾーンの当たり判定用の箱を計算しておく
+        triggerZoneBox = new THREE.Box3().setFromObject(triggerZone);
+
         let rayOrigin, intersects, groundY;
 
         // 関所のモデルを配置
@@ -259,16 +236,18 @@ function loadModels() {
         scene.add(sekisyo);
         collidableObjects.push(sekisyo);
 
-        // 門番のモデルを配置
-        const gatekeeper = loadedGatekeeper.clone();
-        gatekeeper.scale.set(0.5, 0.5, 0.5);
-        rayOrigin = new THREE.Vector3(0, 100, 0);
-        raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
-        intersects = raycaster.intersectObject(background, true);
-        groundY = intersects.length > 0 ? intersects[0].point.y : 0;
-        gatekeeper.position.set(-1.5, groundY, -4.5);
-        scene.add(gatekeeper);
-        collidableObjects.push(gatekeeper);
+        castleLocations.forEach(location => {
+            const gatekeeper = loadedGatekeeper.clone();
+            gatekeeper.scale.set(0.5, 0.5, 0.5);
+            location.object = gatekeeper;
+            rayOrigin = new THREE.Vector3(location.x, 100, location.z);
+            raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
+            intersects = raycaster.intersectObject(background, true);
+            groundY = intersects.length > 0 ? intersects[0].point.y : 0;
+            gatekeeper.position.set(location.x, groundY, location.z);
+            scene.add(gatekeeper);
+            collidableObjects.push(gatekeeper);
+        });
 
         // // 湖のモデルを配置
         // const lakePosition = { x: -0.05, y: 0, z: 0 };
@@ -317,33 +296,15 @@ function onWindowResize() {
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-// Enterキーで回答モーダルを開く
-watch(() => keysPressed.value['enter'], (isPressed) => {
-  if (isPressed && !isAnswerModalVisible.value) { // モーダルが既に開いていなければ
-    isAnswerModalVisible.value = true;
-    nextTick(() => {
-      if(answerInput.value) answerInput.value.focus();
-    });
-  }
-});
-
-// Escapeキーでモーダルを閉じる
-watch(() => keysPressed.value['escape'], (isPressed) => {
-  if (isPressed) {
-    isAnswerModalVisible.value = false;
-    isExplanationModalVisible.value = false;
-  }
-});
-
 // アニメーションループ
 function animate() {
-    animationFrameId = requestAnimationFrame(animate);
-    const delta = clock.getDelta();
+  animationFrameId = requestAnimationFrame(animate);
+  const delta = clock.getDelta();
 
-    if (characterHook.mixer) characterHook.mixer.update(delta);
+  if (characterHook.mixer) characterHook.mixer.update(delta);
 
-    if (characterHook.character && background) {
-        const hitInfo = characterHook.updatePosition({
+  if (characterHook.character && background) {
+    const hitInfo = characterHook.updatePosition({
       delta,
       keysPressed: keysPressed.value,
       raycaster,
@@ -351,6 +312,22 @@ function animate() {
       castleLocations,
       backgroundBox
     });
+
+    // 遷移ゾーンとの接触判定
+    if (triggerZoneBox) {
+        // キャラクターの現在位置を中心とした小さな箱を計算
+        characterBox.setFromCenterAndSize(
+            characterHook.character.position,
+            new THREE.Vector3(1, 2, 1) // キャラクターの当たり判定のサイズ
+        );
+
+      // キャラクターの箱と遷移ゾーンの箱が重なっているかチェック
+      if (triggerZoneBox.intersectsBox(characterBox)) {
+          isTransitionButtonVisible.value = true; // 重なっていたらボタンを表示
+      } else {
+          isTransitionButtonVisible.value = false; // 重なっていなければボタンを非表示
+      }
+    }
 
     // 衝突結果に応じて吹き出しを更新
     if (hitInfo) {
@@ -366,8 +343,8 @@ function animate() {
     updatePersistentLabels();
   }
 
-    controls.update();
-    renderer.render(scene, camera);
+  controls.update();
+  renderer.render(scene, camera);
 }
 
 // === 衝突判定と吹き出しの更新 ===
@@ -409,8 +386,7 @@ function updatePersistentLabels() {
 
 // === UI ロジック ===
 function displayQuestion() {
-    const currentCastle = castleLocations[currentQuestionIndex];
-    questionText.value = `${currentCastle.location}の住所は何でしょうか。`;
+    questionText.value = `関所Aにいる門番に港町へ辿り着ける関所の住所を教えてもらう。`;
     feedbackText.value = '';
     userAnswer.value = '';
     isCorrect.value = false;
@@ -424,43 +400,9 @@ function hideQuestionModal() {
   isQuestionModalVisible.value = false;
 }
 
-// 回答の提出
-function submitAnswer() {
-    if (!userAnswer.value) return;
-    const correctAnswer = castleLocations[currentQuestionIndex].name;
-    if (userAnswer.value.trim() === correctAnswer) {
-        feedbackText.value = '正解◎';
-        feedbackColor.value = 'green';
-        isCorrect.value = true;
-    } else {
-        feedbackText.value = '不正解×';
-        feedbackColor.value = 'red';
-    }
-}
-
-// 解説モーダルの表示
-function showExplanation() {
-    explanationText.value = '鍛冶の村の住所は「２丁目３番３５号」だね！\n\n' +
-                          '実は、このお話はネットワークの世界とそっくりなんだ。\n' +
-                          '君が操作していた桃太郎は、情報を運ぶ小さなデータ「パケット」。\n' +
-                          'そして、目的地の「鍛冶の村」は、パケットが届けられる「宛先」なんだよ。\n\n' +
-                          '手紙に住所が必要なように、パケットを正確に届けるためにも「IPアドレス」という住所が絶対に必要になるんだ。\n' +
-                          '君が正しい住所を見つけられたから、桃太郎は鍛冶の村にたどり着けたんだね！';
-
-    // explanationText.value = 'クリアおめでとう！鍛冶の村の住所を見事に突き止めたね！\n\n' +
-    // 'さて、ここで種明かしだ。君が体験した冒険は、インターネットの世界で毎日起きていることなんだ。\n' +
-    // '主人公の桃太郎は、ネットワークを旅する情報の主人公「パケット」。\n' +
-    // 'そして桃太郎が目指した「鍛冶の村」は、データの届け先である「宛先」。\n\n' +
-    // '君が村の住所を探し当てたように、ネットワークの世界でも「IPアドレス」という正しい住所をパケットに教えてあげないと、情報は迷子になってしまうんだ。\n' +
-    // '君は、立派なネットワークの案内人だ！';
-
-    isExplanationModalVisible.value = true;
-    isAnswerModalVisible.value = false;
-}
-
-// 解説モーダルの閉じるボタン
-function closeExplanation() {
-    isExplanationModalVisible.value = false;
+function goToStageTwoTwo() {
+  // ★ '/stage-2-2' の部分は、実際のルート設定に合わせて変更してください
+  router.push('/StageTwoPartTwo');
 }
 </script>
 
@@ -526,7 +468,8 @@ body {
   font-weight: bold;
 }
 
-#question-button:hover {
+#question-button:hover,
+.transition-button-container button:hover {
   background-color: rgba(240, 240, 240, 0.95);
 }
 
@@ -617,5 +560,26 @@ body {
   font-weight: bold;
   margin: 0 2px;
   font-family: inherit;
+}
+
+.transition-button-container {
+  position: absolute;
+  bottom: 50px;
+  top: 34%;
+  left: 79%;
+  transform: translateX(-50%);
+  z-index: 100;
+}
+
+.transition-button-container button {
+  padding: 15px 30px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 8px;
+  border: none;
+  background-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border: 1px solid #ccc;
 }
 </style>
