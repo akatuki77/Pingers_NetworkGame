@@ -83,6 +83,7 @@ import BackButton from "@/components/BackButton.vue";
 import { useCharacterKeymap } from "@/composable/useCharacterKeymap.js";
 import { useCharacter } from "@/composable/useCharacter.js";
 import { useKeyboard } from "@/composable/useKeyboard.js";
+import { useRouter } from 'vue-router';
 
 // === Vue リアクティブな状態管理 ===
 const canvasContainer = ref(null);
@@ -126,6 +127,8 @@ const castleLocations = [
     { name: "２丁目１ー６", location: "商人の村", x: -9.5, z: -6.5, object: null }
 ];
 let animationFrameId;
+
+const router = useRouter(); // routerインスタンスを取得
 
 // === 初期化処理 ===
 onMounted(() => {
@@ -451,7 +454,7 @@ function showExplanation() {
 
 // 解説モーダルの閉じるボタン
 function closeExplanation() {
-    isExplanationModalVisible.value = false;
+    router.push('/content/1');
 }
 </script>
 

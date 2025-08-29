@@ -40,7 +40,7 @@
     </div>
   </div>
 
-  <BackButton to="/content/2" />
+  <BackButton to="/content/1" />
 </template>
 
 <script setup>
@@ -61,7 +61,7 @@ const canvasContainer = ref(null);
 // UIの状態
 const speechBubble = ref({ visible: false, text: "", x: 0, y: 0 });
 const isCorrect = ref(false);
-const persistentLabels = ref([]); // ★ [追加] 常時表示ラベル用の配列
+const persistentLabels = ref([]); // 常時表示ラベル用の配列
 const isQuestionModalVisible = ref(false);
 
 // クイズデータ
@@ -90,8 +90,8 @@ const castleLocations = [
 ];
 let animationFrameId;
 
-const router = useRouter(); // ★ routerインスタンスを取得
-const isTransitionButtonVisible = ref(false); // ★ ボタンの表示状態を管理
+const router = useRouter(); // routerインスタンスを取得
+const isTransitionButtonVisible = ref(false); // ボタンの表示状態を管理
 
 // 2-2へ遷移ボタンのキャラクターの当たり判定用の箱を準備
 const characterBox = new THREE.Box3();
