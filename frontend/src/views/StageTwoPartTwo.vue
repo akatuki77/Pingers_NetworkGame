@@ -69,7 +69,7 @@
     </div>
   </div>
 
-  <BackButton to="/content/1" />
+  <BackButton to="/content/2" />
 </template>
 
 <script setup>
@@ -77,7 +77,6 @@ import { ref, onMounted, onUnmounted, nextTick, watch } from "vue";
 import * as THREE from "three";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import BackButton from "@/components/BackButton.vue";
 import { useCharacterKeymap } from "@/composable/useCharacterKeymap.js";
@@ -104,7 +103,7 @@ const feedbackColor = ref("black");
 const explanationText = ref("ステージで学んだことについての説明");
 
 // === three.js関連の変数 (リアクティブにしない) ===
-let scene, camera, renderer, controls,  background, backgroundBox;
+let scene, camera, renderer, controls,  background, backgroundBox, background2, triggerZoneBox;
 // let idleAction, walkAction;
 const collidableObjects = [];
 const clock = new THREE.Clock();
@@ -121,9 +120,15 @@ let collisionTargetObject = null;
 // クイズ情報
 let currentQuestionIndex = 1;
 const castleLocations = [
-    { name: "２丁目６ー１１", location: "花の村", x: -0.7, z: -7.5, object: null },
-    { name: "２丁目３ー３５", location: "鍛冶の村", x: 8, z: -6, object: null },
-    { name: "２丁目１ー６", location: "商人の村", x: -9.5, z: -6.5, object: null }
+  { name: "２丁目１ー６", location: "関所A", x: -8.8, z: -5.5, object: null },
+  { name: "２丁目６ー１１", location: "関所B", x: -0.1, z: -6.5, object: null },
+  { name: "２丁目３ー３５", location: "関所C", x: 9, z: -5, object: null }
+];
+
+const gatekeeperLocations = [
+    { x: -10, z: -4.3, object: null },
+    { x: -1.4, z: -5.4, object: null },
+    { x: 7.8, z: -3.8, object: null }
 ];
 let animationFrameId;
 
@@ -194,13 +199,6 @@ function initThree() {
   scene.add(directionalLight);
 }
 
-// === モデル読み込み ===
-function loadGltfModel(path) {
-  return new Promise((resolve, reject) => {
-    new GLTFLoader().load(path, resolve, undefined, reject);
-  });
-}
-
 // OBJとMTLファイルを読み込む関数
 function loadObjModel(basePath, mtlFileName, objFileName) {
     return new Promise((resolve, reject) => {
@@ -219,34 +217,77 @@ function loadObjModel(basePath, mtlFileName, objFileName) {
 // モデルの読み込みとシーンへの追加
 function loadModels() {
     Promise.all([
-        // loadGltfModel('/models/character/bg_clean.glb'),
+        loadObjModel('/models/character/', 'background_gate-1.mtl', 'background_gate-1.obj'),
         loadObjModel('/models/character/', 'background_village.mtl', 'background_village.obj'),
-        loadObjModel('/models/character/', 'village.mtl', 'village.obj'),
-        loadObjModel('/models/character/', 'village_lake.mtl', 'village_lake.obj'),
-        loadGltfModel('/models/character/flower.glb'),
+        loadObjModel('/models/character/', 'sekisyo-0.mtl', 'sekisyo-0.obj'),
+        loadObjModel('/models/character/', 'gatekeeper.mtl', 'gatekeeper.obj'),
+        loadObjModel('/models/character/', 'village_lake.mtl', 'village_lake.obj')
     ])
-    .then(async ([Background, loadedVillage, loadedLake, loadedFlower]) => {
+    .then(async ([Background, Background2, loadedSekisyo, loadedGatekeeper, loadedLake]) => {
         // 背景モデルの設定
         background = Background;
         scene.add(background);
         collidableObjects.push(background);
 
+        const background1Box = new THREE.Box3().setFromObject(background);
+        const background1Size = new THREE.Vector3();
+        background1Box.getSize(background1Size);
+
+        const background2Box = new THREE.Box3().setFromObject(Background2);
+        const background2Size = new THREE.Vector3();
+        background2Box.getSize(background2Size);
+
+        background2 = Background2;
+
+        const newZPosition = (background1Size.z / 2) + (background2Size.z / 2);
+        background2.position.set(0, 0, newZPosition);
+
+        scene.add(background2);
+        collidableObjects.push(background2);
+
+        // 2つの背景のつなぎ目に「見えないゾーン」を作成
+        const zonePositionZ = -background1Size.z / 2; // つなぎ目のZ座標
+        // ゾーンのジオメトリ（幅、高さ、奥行き）
+        const zoneGeometry = new THREE.BoxGeometry(background1Size.x, 10, 2);
+        // ゾーンのマテリアル（透明にする）
+        const zoneMaterial = new THREE.MeshBasicMaterial({ visible: false });
+        const triggerZone = new THREE.Mesh(zoneGeometry, zoneMaterial);
+
+        // ゾーンをつなぎ目に配置
+        triggerZone.position.set(0, 5, zonePositionZ);
+        scene.add(triggerZone);
+
+        // ゾーンの当たり判定用の箱を計算しておく
+        triggerZoneBox = new THREE.Box3().setFromObject(triggerZone);
+
         let rayOrigin, intersects, groundY;
 
-        // 村のモデルを配置
+        // 関所のモデルを配置
         castleLocations.forEach(location => {
-            const village = loadedVillage.clone();
-            village.scale.set(0.5, 0.5, 0.5);
-            location.object = village;
+            const sekisyo = loadedSekisyo.clone();
+            sekisyo.scale.set(0.5, 0.5, 0.5);
+            location.object = sekisyo;
             rayOrigin = new THREE.Vector3(location.x, 100, location.z);
             raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
             intersects = raycaster.intersectObject(background, true);
             groundY = intersects.length > 0 ? intersects[0].point.y : 0;
-            village.position.set(location.x, groundY, location.z);
-            scene.add(village);
-            collidableObjects.push(village);
+            sekisyo.position.set(location.x, 2, location.z);
+            scene.add(sekisyo);
+            collidableObjects.push(sekisyo);
+        });
 
-
+        // 門番のモデルを配置
+        gatekeeperLocations.forEach(location => {
+            const gatekeeper = loadedGatekeeper.clone();
+            gatekeeper.scale.set(0.5, 0.5, 0.5);
+            location.object = gatekeeper;
+            rayOrigin = new THREE.Vector3(location.x, 100, location.z);
+            raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
+            intersects = raycaster.intersectObject(background, true);
+            groundY = intersects.length > 0 ? intersects[0].point.y : 0;
+            gatekeeper.position.set(location.x, groundY, location.z);
+            scene.add(gatekeeper);
+            collidableObjects.push(gatekeeper);
         });
 
         // 湖のモデルを配置
@@ -255,20 +296,8 @@ function loadModels() {
         raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
         intersects = raycaster.intersectObject(background, true);
         groundY = intersects.length > 0 ? intersects[0].point.y : 0;
-        loadedLake.position.set(lakePosition.x, groundY - 2.5, lakePosition.z);
+        loadedLake.position.set(lakePosition.x, groundY - 2.42, lakePosition.z);
         scene.add(loadedLake);
-
-        // 花のモデルを配置
-        const flower = loadedFlower.scene.clone();
-        const flowerPosition = { x: 0.4, y: 0, z: 0.5 };
-        rayOrigin = new THREE.Vector3(flowerPosition.x, 100, flowerPosition.z);
-        raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
-        intersects = raycaster.intersectObject(background, true);
-        groundY = intersects.length > 0 ? intersects[0].point.y : 0;
-        flower.position.set(flowerPosition.x, groundY - 2.4, flowerPosition.z);
-        flower.rotation.y = -6.2; // 少し回転させる
-        scene.add(flower);
-        collidableObjects.push(flower);
 
         scene.traverse(child => {
           if (child.isMesh) {
@@ -400,8 +429,7 @@ function updatePersistentLabels() {
 
 // === UI ロジック ===
 function displayQuestion() {
-    const currentCastle = castleLocations[currentQuestionIndex];
-    questionText.value = `${currentCastle.location}の住所は何でしょうか。`;
+    questionText.value = `2-1で港町へ行ける関所の住所は２丁目３ー３５だと分かった。その関所まで行こう。`;
     feedbackText.value = '';
     userAnswer.value = '';
     isCorrect.value = false;
@@ -431,19 +459,12 @@ function submitAnswer() {
 
 // 解説モーダルの表示
 function showExplanation() {
-    explanationText.value = '鍛冶の村の住所は「２丁目３番３５号」だね！\n\n' +
+    explanationText.value = '住所が２丁目３ー３５である関所は「関所B」だね！\n\n' +
                           '実は、このお話はネットワークの世界とそっくりなんだ。\n' +
                           '君が操作していた桃太郎は、情報を運ぶ小さなデータ「パケット」。\n' +
-                          'そして、目的地の「鍛冶の村」は、パケットが届けられる「宛先」なんだよ。\n\n' +
+                          'そして、目的地の「関所B」は、パケットが届けられる「宛先」なんだよ。\n\n' +
                           '手紙に住所が必要なように、パケットを正確に届けるためにも「IPアドレス」という住所が絶対に必要になるんだ。\n' +
-                          '君が正しい住所を見つけられたから、桃太郎は鍛冶の村にたどり着けたんだね！';
-
-    // explanationText.value = 'クリアおめでとう！鍛冶の村の住所を見事に突き止めたね！\n\n' +
-    // 'さて、ここで種明かしだ。君が体験した冒険は、インターネットの世界で毎日起きていることなんだ。\n' +
-    // '主人公の桃太郎は、ネットワークを旅する情報の主人公「パケット」。\n' +
-    // 'そして桃太郎が目指した「鍛冶の村」は、データの届け先である「宛先」。\n\n' +
-    // '君が村の住所を探し当てたように、ネットワークの世界でも「IPアドレス」という正しい住所をパケットに教えてあげないと、情報は迷子になってしまうんだ。\n' +
-    // '君は、立派なネットワークの案内人だ！';
+                          '君が正しい住所を見つけられたから、桃太郎は関所Bにたどり着けたんだね！';
 
     isExplanationModalVisible.value = true;
     isAnswerModalVisible.value = false;
