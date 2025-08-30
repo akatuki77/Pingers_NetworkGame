@@ -119,7 +119,9 @@ const selectSubChapter = (subChapter) => {
 
 // ステージに移動する関数（変更なし）
 const onClickSubChapter = () => {
-  router.push(`/stageOne`);
+  if (selectedSubChapter.value) {
+    router.push(`/stage/${selectedSubChapter.value.id}`);
+  }
 };
 
 const resetSelection = () => {

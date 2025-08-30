@@ -4,6 +4,7 @@ import SelectStory from '@/views/SelectStory.vue'//ストーリ選択画面
 import Content from '@/views/TableContent.vue'//目次の画面
 import StageOne from '@/views/StageOne.vue'//ステージ1の画面
 import Glossary from '@/views/Glossary.vue'//用語集の画面
+import stages from '@/views/GameStage.vue' // ステージの設計図をインポート
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -31,7 +32,13 @@ const router = createRouter({
       path: '/stageOne',
       name: 'stageOne',
       component: StageOne,
+    },
+    {
+      path: '/stage/:stageId',
+      name: 'stage',
+      component: stages,
     }
+
   ],
 })
 
