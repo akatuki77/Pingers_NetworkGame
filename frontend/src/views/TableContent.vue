@@ -62,7 +62,8 @@ const route = useRoute();
 const storyContent = {
   '1': {
     title: 'ももたろう',
-    summary: '昔々、ある所に桃から生まれた男の子、桃太郎がいました。鬼ヶ島にいる鬼を退治するため、旅に出る物語です。',
+    summary: `昔々、ある所に桃から生まれた男の子、桃太郎がいました。
+鬼ヶ島にいる鬼を退治するため、旅に出る物語です。`,
     chapter: [
       {
         number: '第一章',
@@ -253,9 +254,10 @@ onUnmounted(() => {
 }
 
 .summary-text {
-  font-size: 1.2em;
+  font-size: 1.5em;
   line-height: 1.6;
   padding: 1rem;
+  white-space: pre-wrap;
 }
 
 .chapter-list {

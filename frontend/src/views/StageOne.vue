@@ -60,7 +60,7 @@
           <h2>クリア！</h2>
           <p id="explanation-text">{{ explanationText }}</p>
         </div>
-        <button @click="closeExplanation">閉じる</button>
+        <button @click="closeExplanation">一覧に戻る</button>
       </div>
     </div>
 
@@ -83,6 +83,7 @@ import BackButton from "@/components/BackButton.vue";
 import { useCharacterKeymap } from "@/composable/useCharacterKeymap.js";
 import { useCharacter } from "@/composable/useCharacter.js";
 import { useKeyboard } from "@/composable/useKeyboard.js";
+import router from "@/router";
 
 // === Vue リアクティブな状態管理 ===
 const canvasContainer = ref(null);
@@ -93,7 +94,7 @@ const speechBubble = ref({ visible: false, text: "", x: 0, y: 0 });
 const isAnswerModalVisible = ref(false);
 const isExplanationModalVisible = ref(false);
 const isCorrect = ref(false);
-const persistentLabels = ref([]); // ★ [追加] 常時表示ラベル用の配列
+const persistentLabels = ref([]);
 const isQuestionModalVisible = ref(false);
 
 // クイズデータ
@@ -105,7 +106,6 @@ const explanationText = ref("ステージで学んだことについての説明
 
 // === three.js関連の変数 (リアクティブにしない) ===
 let scene, camera, renderer, controls,  background, backgroundBox;
-// let idleAction, walkAction;
 const collidableObjects = [];
 const clock = new THREE.Clock();
 const raycaster = new THREE.Raycaster();
@@ -121,9 +121,9 @@ let collisionTargetObject = null;
 // クイズ情報
 let currentQuestionIndex = 1;
 const castleLocations = [
-    { name: "２丁目６ー１１", location: "花の村", x: -0.7, z: -7.5, object: null },
-    { name: "２丁目３ー３５", location: "鍛冶の村", x: 8, z: -6, object: null },
-    { name: "２丁目１ー６", location: "商人の村", x: -9.5, z: -6.5, object: null }
+  { name: "２丁目６ー１１", location: "花の村", x: -0.7, z: -7.5, object: null },
+  { name: "２丁目３ー３５", location: "鍛冶の村", x: 8, z: -6, object: null },
+  { name: "２丁目１ー６", location: "商人の村", x: -9.5, z: -6.5, object: null }
 ];
 let animationFrameId;
 
@@ -140,7 +140,6 @@ onMounted(() => {
 onUnmounted(() => {
   cancelAnimationFrame(animationFrameId);
   cleanupEventListeners();
-  // WebGLリソースの解放
   if (renderer) {
     renderer.dispose();
   }
@@ -149,22 +148,18 @@ onUnmounted(() => {
 // === three.jsのセットアップ ===
 function initThree() {
   scene = new THREE.Scene();
-  // ★★★ ここからグラデーション背景の作成 ★★★
   const canvas = document.createElement('canvas');
   const context = canvas.getContext('2d');
-  canvas.width = 2; // グラデーションなので、幅は小さくてOK
+  canvas.width = 2;
   canvas.height = 512;
 
-  // 上から下へのグラデーションを作成
   const gradient = context.createLinearGradient(0, 0, 0, canvas.height);
-  gradient.addColorStop(0, '#59c0f3'); // 元: #a0d8ef
-  gradient.addColorStop(1, '#97d7fd'); // 元: #c2e9fb  // グラデーションで塗りつぶす
+  gradient.addColorStop(0, '#59c0f3');
+  gradient.addColorStop(1, '#97d7fd');
   context.fillStyle = gradient;
   context.fillRect(0, 0, canvas.width, canvas.height);
 
-  // 作成したCanvasからテクスチャを生成して背景に設定
   scene.background = new THREE.CanvasTexture(canvas);
-  // ★★★ ここまで ★★★
 
   camera = new THREE.PerspectiveCamera( 11, window.innerWidth / window.innerHeight, 0.1, 1000);
   camera.position.set(80, 50, 25);
@@ -185,7 +180,7 @@ function initThree() {
   const directionalLight = new THREE.DirectionalLight(0xffffff, 5.0);
   directionalLight.position.set(10, 15, -5);
   directionalLight.castShadow = true;
-  directionalLight.shadow.mapSize.width = 2048; // 影の解像度を上げる
+  directionalLight.shadow.mapSize.width = 2048;
   directionalLight.shadow.mapSize.height = 2048;
   directionalLight.shadow.camera.top = 20;
   directionalLight.shadow.camera.bottom = -20;
@@ -201,7 +196,6 @@ function loadGltfModel(path) {
   });
 }
 
-// OBJとMTLファイルを読み込む関数
 function loadObjModel(basePath, mtlFileName, objFileName) {
     return new Promise((resolve, reject) => {
         const mtlLoader = new MTLLoader();
@@ -216,24 +210,20 @@ function loadObjModel(basePath, mtlFileName, objFileName) {
     });
 }
 
-// モデルの読み込みとシーンへの追加
 function loadModels() {
     Promise.all([
-        // loadGltfModel('/models/character/bg_clean.glb'),
         loadObjModel('/models/character/', 'background_village.mtl', 'background_village.obj'),
         loadObjModel('/models/character/', 'village.mtl', 'village.obj'),
         loadObjModel('/models/character/', 'village_lake.mtl', 'village_lake.obj'),
         loadGltfModel('/models/character/flower.glb'),
     ])
     .then(async ([Background, loadedVillage, loadedLake, loadedFlower]) => {
-        // 背景モデルの設定
         background = Background;
         scene.add(background);
         collidableObjects.push(background);
 
         let rayOrigin, intersects, groundY;
 
-        // 村のモデルを配置
         castleLocations.forEach(location => {
             const village = loadedVillage.clone();
             village.scale.set(0.5, 0.5, 0.5);
@@ -245,11 +235,8 @@ function loadModels() {
             village.position.set(location.x, groundY, location.z);
             scene.add(village);
             collidableObjects.push(village);
-
-
         });
 
-        // 湖のモデルを配置
         const lakePosition = { x: -0.05, y: 0, z: 0 };
         rayOrigin = new THREE.Vector3(lakePosition.x, 100, lakePosition.z);
         raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
@@ -258,7 +245,6 @@ function loadModels() {
         loadedLake.position.set(lakePosition.x, groundY - 2.5, lakePosition.z);
         scene.add(loadedLake);
 
-        // 花のモデルを配置
         const flower = loadedFlower.scene.clone();
         const flowerPosition = { x: 0.4, y: 0, z: 0.5 };
         rayOrigin = new THREE.Vector3(flowerPosition.x, 100, flowerPosition.z);
@@ -266,7 +252,7 @@ function loadModels() {
         intersects = raycaster.intersectObject(background, true);
         groundY = intersects.length > 0 ? intersects[0].point.y : 0;
         flower.position.set(flowerPosition.x, groundY - 2.4, flowerPosition.z);
-        flower.rotation.y = -6.2; // 少し回転させる
+        flower.rotation.y = -6.2;
         scene.add(flower);
         collidableObjects.push(flower);
 
@@ -280,9 +266,8 @@ function loadModels() {
         backgroundBox = new THREE.Box3().setFromObject(background);
         await characterHook.loadCharacter(scene);
 
-        // ★ [追加] 常時表示ラベルを初期化
         persistentLabels.value = castleLocations.map(loc => ({
-          text: loc.location, // 村の名前を設定
+          text: loc.location,
           x: 0,
           y: 0,
           visible: true,
@@ -296,7 +281,6 @@ function setupEventListeners() {
     window.addEventListener('resize', onWindowResize);
 }
 
-// イベントリスナーのクリーンアップ
 function cleanupEventListeners() {
     window.removeEventListener('resize', onWindowResize);
 }
@@ -308,9 +292,8 @@ function onWindowResize() {
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-// Enterキーで回答モーダルを開く
 watch(() => keysPressed.value['enter'], (isPressed) => {
-  if (isPressed && !isAnswerModalVisible.value) { // モーダルが既に開いていなければ
+  if (isPressed && !isAnswerModalVisible.value) {
     isAnswerModalVisible.value = true;
     nextTick(() => {
       if(answerInput.value) answerInput.value.focus();
@@ -318,7 +301,6 @@ watch(() => keysPressed.value['enter'], (isPressed) => {
   }
 });
 
-// Escapeキーでモーダルを閉じる
 watch(() => keysPressed.value['escape'], (isPressed) => {
   if (isPressed) {
     isAnswerModalVisible.value = false;
@@ -343,7 +325,6 @@ function animate() {
       backgroundBox
     });
 
-    // 衝突結果に応じて吹き出しを更新
     if (hitInfo) {
       speechBubble.value.visible = true;
       speechBubble.value.text = hitInfo.name;
@@ -363,11 +344,9 @@ function animate() {
 
 // === 衝突判定と吹き出しの更新 ===
 function updateSpeechBubble() {
-    // 追跡対象がない場合は何もしない
-     if (!speechBubble.value.visible || !collisionTargetObject) return;
+    if (!speechBubble.value.visible || !collisionTargetObject) return;
     const vector = new THREE.Vector3();
 
-    // オブジェクトの中心から少し上に吹き出しを表示
     collisionTargetObject.updateMatrixWorld();
     vector.setFromMatrixPosition(collisionTargetObject.matrixWorld).add(new THREE.Vector3(0, 2.5, 0));
     vector.project(camera);
@@ -378,7 +357,6 @@ function updateSpeechBubble() {
     speechBubble.value.y = -(vector.y * heightHalf) + heightHalf;
 }
 
-// 常時表示ラベルの位置を更新する関数
 function updatePersistentLabels() {
   if (!camera) return;
 
@@ -415,7 +393,6 @@ function hideQuestionModal() {
   isQuestionModalVisible.value = false;
 }
 
-// 回答の提出
 function submitAnswer() {
     if (!userAnswer.value) return;
     const correctAnswer = castleLocations[currentQuestionIndex].name;
@@ -431,58 +408,48 @@ function submitAnswer() {
 
 // 解説モーダルの表示
 function showExplanation() {
-    explanationText.value = '鍛冶の村の住所は「２丁目３番３５号」だね！\n\n' +
-                          '実は、このお話はネットワークの世界とそっくりなんだ。\n' +
-                          '君が操作していた桃太郎は、情報を運ぶ小さなデータ「パケット」。\n' +
-                          'そして、目的地の「鍛冶の村」は、パケットが届けられる「宛先」なんだよ。\n\n' +
-                          '手紙に住所が必要なように、パケットを正確に届けるためにも「IPアドレス」という住所が絶対に必要になるんだ。\n' +
-                          '君が正しい住所を見つけられたから、桃太郎は鍛冶の村にたどり着けたんだね！';
+    explanationText.value = `鍛冶の村の住所は「２丁目３番３５号」だね！
 
-    // explanationText.value = 'クリアおめでとう！鍛冶の村の住所を見事に突き止めたね！\n\n' +
-    // 'さて、ここで種明かしだ。君が体験した冒険は、インターネットの世界で毎日起きていることなんだ。\n' +
-    // '主人公の桃太郎は、ネットワークを旅する情報の主人公「パケット」。\n' +
-    // 'そして桃太郎が目指した「鍛冶の村」は、データの届け先である「宛先」。\n\n' +
-    // '君が村の住所を探し当てたように、ネットワークの世界でも「IPアドレス」という正しい住所をパケットに教えてあげないと、情報は迷子になってしまうんだ。\n' +
-    // '君は、立派なネットワークの案内人だ！';
+実は、このお話はネットワークの世界とそっくりなんだ。
+君が操作していた桃太郎は、情報を運ぶ小さなデータ「パケット」。
+そして、目的地の「鍛冶の村」は、パケットが届けられる「宛先」なんだよ。
+
+手紙に住所が必要なように、パケットを正確に届けるためにも「IPアドレス」という住所が絶対に必要になるんだ。
+君が正しい住所を見つけられたから、桃太郎は鍛冶の村にたどり着けたんだね！`;
 
     isExplanationModalVisible.value = true;
     isAnswerModalVisible.value = false;
 }
 
-// 解説モーダルの閉じるボタン
 function closeExplanation() {
-    isExplanationModalVisible.value = false;
+    router.push('/content/1');
 }
 </script>
 
 <style>
 @font-face {
   font-family: 'azuki-font';
-  /* @/ は src/ フォルダを指す便利なエイリアス（別名）です。
-    これを使うことで、CSSファイルがどこにあっても常に正しいパスを指定できます。
-  */
   src: url('@/assets/fonts/azuki.ttf') format('truetype');
 }
 body {
   margin: 0;
-  overflow: hidden; /* スクロールバーを非表示 */
-  font-family: 'azuki-font', sans-serif; /* フォントを適用 */
+  overflow: hidden;
+  font-family: 'azuki-font', sans-serif;
 }
 
 .persistent-label, #speech-bubble {
- position: absolute;
- /* 背景を半透明の白に変更 (透明度を 0.8 に設定) */
- background-color: rgba(255, 255, 255, 0.4);
- border: 2px solid black; /* 輪郭線はそのまま */
- border-radius: 10px;
- padding: 10px 15px;
- font-size: 16px;
- font-weight: bold;
- z-index: 100;
- transform: translate(-50%, -50%); /* translate の Y 軸方向の値を修正 */
- white-space: nowrap;
- backdrop-filter: blur(5px); /* ぼかし効果を追加 */
- -webkit-backdrop-filter: blur(5px); /* Safari 用 */
+  position: absolute;
+  background-color: rgba(255, 255, 255, 0.4);
+  border: 2px solid black;
+  border-radius: 10px;
+  padding: 10px 15px;
+  font-size: 16px;
+  font-weight: bold;
+  z-index: 100;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
 }
 
 #speech-bubble {
@@ -553,13 +520,16 @@ body {
   transform: translateY(20px);
 }
 
-/* 問題文モーダルのテキストを大きくするための専用スタイル */
 #question-modal-text {
-  font-size: 28px; /* 文字を大きく */
+  font-size: 28px;
   font-weight: bold;
-  line-height: 1.5; /* 行間を調整 */
-  margin-bottom: 25px; /* テキストと閉じるボタンの間隔 */
-  max-width: 80vw; /* 横幅が広がりすぎないように */
+  line-height: 1.5;
+  margin-bottom: 25px;
+  max-width: 80vw;
+}
+
+#explanation-text {
+  white-space: pre-wrap; /* 改行を有効にする */
 }
 
 #modal-content,
@@ -588,8 +558,6 @@ body {
   bottom: 30px;
   left: 53%;
   transform: translateX(0%);
-  /* background-color: rgba(0, 0, 0, 0.5); */
-  /* color: white; */
   color: black;
   padding: 10px 20px;
   border-radius: 10px;
