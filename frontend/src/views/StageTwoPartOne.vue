@@ -86,7 +86,7 @@ let collisionTargetObject = null;
 
 // クイズ情報
 const castleLocations = [
-    { name: "住所が２丁目３ー３５である関所に行けば、港町へ辿り着けるであろう。", location: "関所Aの門番", x: -1, z: -5, object: null },
+    { name: "関所Cに行けば、港町へ辿り着けるであろう。", location: "関所Aの門番", x: 3, z: -6, object: null },
 ];
 let animationFrameId;
 
@@ -152,7 +152,8 @@ function initThree() {
   scene.add(ambientLight);
 
   const directionalLight = new THREE.DirectionalLight(0xffffff, 5.0);
-  directionalLight.position.set(10, 15, -5);
+  directionalLight.position.set(10, 15, 5);
+
   directionalLight.castShadow = true;
   directionalLight.shadow.mapSize.width = 2048; // 影の解像度を上げる
   directionalLight.shadow.mapSize.height = 2048;
@@ -181,8 +182,8 @@ function loadObjModel(basePath, mtlFileName, objFileName) {
 // モデルの読み込みとシーンへの追加
 function loadModels() {
     Promise.all([
+        loadObjModel('/models/character/', 'background_gate_oneRoad.mtl', 'background_gate_oneRoad.obj'),
         loadObjModel('/models/character/', 'background_gate-1.mtl', 'background_gate-1.obj'),
-        loadObjModel('/models/character/', 'background_village.mtl', 'background_village.obj'),
         loadObjModel('/models/character/', 'sekisyo-0.mtl', 'sekisyo-0.obj'),
         loadObjModel('/models/character/', 'gatekeeper.mtl', 'gatekeeper.obj'),
     ])
@@ -195,6 +196,7 @@ function loadModels() {
         const background1Box = new THREE.Box3().setFromObject(background);
         const background1Size = new THREE.Vector3();
         background1Box.getSize(background1Size);
+        background.position.set(0, -4.9, 0);
 
         const background2Box = new THREE.Box3().setFromObject(Background2);
         const background2Size = new THREE.Vector3();
@@ -227,36 +229,27 @@ function loadModels() {
 
         // 関所のモデルを配置
         const sekisyo = loadedSekisyo.clone();
-        sekisyo.scale.set(0.7, 0.7, 0.7);
+        sekisyo.scale.set(0.8, 0.8, 0.8);
         rayOrigin = new THREE.Vector3(0, 100, 0);
         raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
         intersects = raycaster.intersectObject(background, true);
         groundY = intersects.length > 0 ? intersects[0].point.y : 0;
-        sekisyo.position.set(0, groundY - 0.5, -6.5);
+        sekisyo.position.set(0, groundY - 5.2, -9.3);
         scene.add(sekisyo);
         collidableObjects.push(sekisyo);
 
         castleLocations.forEach(location => {
             const gatekeeper = loadedGatekeeper.clone();
-            gatekeeper.scale.set(0.5, 0.5, 0.5);
+            gatekeeper.scale.set(0.7, 0.7, 0.7);
             location.object = gatekeeper;
             rayOrigin = new THREE.Vector3(location.x, 100, location.z);
             raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
             intersects = raycaster.intersectObject(background, true);
             groundY = intersects.length > 0 ? intersects[0].point.y : 0;
-            gatekeeper.position.set(location.x, groundY, location.z);
+            gatekeeper.position.set(location.x, groundY - 4.8, location.z);
             scene.add(gatekeeper);
             collidableObjects.push(gatekeeper);
         });
-
-        // // 湖のモデルを配置
-        // const lakePosition = { x: -0.05, y: 0, z: 0 };
-        // rayOrigin = new THREE.Vector3(lakePosition.x, 100, lakePosition.z);
-        // raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
-        // intersects = raycaster.intersectObject(background, true);
-        // groundY = intersects.length > 0 ? intersects[0].point.y : 0;
-        // loadedLake.position.set(lakePosition.x, groundY - 2.5, lakePosition.z);
-        // scene.add(loadedLake);
 
         scene.traverse(child => {
           if (child.isMesh) {
@@ -268,7 +261,7 @@ function loadModels() {
         backgroundBox = new THREE.Box3().setFromObject(background);
         await characterHook.loadCharacter(scene);
 
-        // ★ [追加] 常時表示ラベルを初期化
+        // 常時表示ラベルを初期化
         persistentLabels.value = castleLocations.map(loc => ({
           text: loc.location, // 村の名前を設定
           x: 0,

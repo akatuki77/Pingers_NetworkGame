@@ -121,15 +121,17 @@ let collisionTargetObject = null;
 // クイズ情報
 let currentQuestionIndex = 1;
 const castleLocations = [
-  { name: "２丁目１ー６", location: "関所A", x: -8.8, z: -5.5, object: null },
-  { name: "２丁目６ー１１", location: "関所B", x: -0.1, z: -6.5, object: null },
-  { name: "２丁目３ー３５", location: "関所C", x: 9, z: -5, object: null }
+  { name: "５丁目３ー９", location: "関所B", x: -8.8, z: -5.5, object: null },
+  { name: "５丁目９ー１３", location: "関所C", x: -0.1, z: -6.5, object: null },
+  { name: "５丁目６ー８", location: "関所D", x: 9, z: -5, object: null },
 ];
-
+const gateLocations = [
+  { x: -0.05, z: 16.3, object: null }
+];
 const gatekeeperLocations = [
-    { x: -10, z: -4.3, object: null },
-    { x: -1.4, z: -5.4, object: null },
-    { x: 7.8, z: -3.8, object: null }
+    { x: -7.3, z: -3.8, object: null },
+    { x: 1.5, z: -4.8, object: null },
+    { x: 10.4, z: -3.3, object: null }
 ];
 let animationFrameId;
 
@@ -191,7 +193,7 @@ function initThree() {
   scene.add(ambientLight);
 
   const directionalLight = new THREE.DirectionalLight(0xffffff, 5.0);
-  directionalLight.position.set(10, 15, -5);
+  directionalLight.position.set(10, 15, 5);
   directionalLight.castShadow = true;
   directionalLight.shadow.mapSize.width = 2048; // 影の解像度を上げる
   directionalLight.shadow.mapSize.height = 2048;
@@ -221,7 +223,7 @@ function loadObjModel(basePath, mtlFileName, objFileName) {
 function loadModels() {
     Promise.all([
         loadObjModel('/models/character/', 'background_gate-1.mtl', 'background_gate-1.obj'),
-        loadObjModel('/models/character/', 'background_village.mtl', 'background_village.obj'),
+        loadObjModel('/models/character/', 'background_gate_oneRoad.mtl', 'background_gate_oneRoad.obj'),
         loadObjModel('/models/character/', 'sekisyo-0.mtl', 'sekisyo-0.obj'),
         loadObjModel('/models/character/', 'gatekeeper.mtl', 'gatekeeper.obj'),
         loadObjModel('/models/character/', 'village_lake.mtl', 'village_lake.obj')
@@ -243,7 +245,7 @@ function loadModels() {
         background2 = Background2;
 
         const newZPosition = (background1Size.z / 2) + (background2Size.z / 2);
-        background2.position.set(0, 0, newZPosition);
+        background2.position.set(0, -4.9, newZPosition);
 
         scene.add(background2);
         collidableObjects.push(background2);
@@ -277,6 +279,20 @@ function loadModels() {
             sekisyo.position.set(location.x, 2, location.z);
             scene.add(sekisyo);
             collidableObjects.push(sekisyo);
+        });
+
+        // 門のモデルを配置
+        gateLocations.forEach(location => {
+            const gate = loadedSekisyo.clone();
+            gate.scale.set(0.8, 0.8, 0.8);
+            location.object = gate;
+            rayOrigin = new THREE.Vector3(location.x, 100, location.z);
+            raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
+            intersects = raycaster.intersectObject(background, true);
+            groundY = intersects.length > 0 ? intersects[0].point.y : 0;
+            gate.position.set(location.x, 2, location.z);
+            scene.add(gate);
+            collidableObjects.push(gate);
         });
 
         // 門番のモデルを配置
@@ -432,7 +448,8 @@ function updatePersistentLabels() {
 
 // === UI ロジック ===
 function displayQuestion() {
-    questionText.value = `2-1で港町へ行ける関所の住所は２丁目３ー３５だと分かった。その関所まで行こう。`;
+    const currentCastle = castleLocations[currentQuestionIndex];
+    questionText.value = `2-1で関所Cに行けば、港町へ辿り着けると分かった。${currentCastle.location}の住所は何でしょうか。`;
     feedbackText.value = '';
     userAnswer.value = '';
     isCorrect.value = false;
