@@ -121,9 +121,9 @@ let collisionTargetObject = null;
 // クイズ情報
 let currentQuestionIndex = 1;
 const castleLocations = [
-  { name: "５丁目３ー９", location: "関所B", x: -8.8, z: -5.5, object: null },
-  { name: "５丁目９ー１３", location: "関所C", x: -0.1, z: -6.5, object: null },
-  { name: "５丁目６ー８", location: "関所D", x: 9, z: -5, object: null },
+  { name: "192.168.10.1", location: "関所B", x: -8.8, z: -5.5, object: null },
+  { name: "192.168.20.1", location: "関所C", x: -0.1, z: -6.5, object: null },
+  { name: "192.168.30.1", location: "関所D", x: 9, z: -5, object: null },
 ];
 const gateLocations = [
   { x: -0.05, z: 16.3, object: null }
@@ -382,23 +382,40 @@ function animate() {
     if (characterHook.mixer) characterHook.mixer.update(delta);
 
     if (characterHook.character && background) {
-        const hitInfo = characterHook.updatePosition({
-      delta,
-      keysPressed: keysPressed.value,
-      raycaster,
-      collidableObjects,
-      castleLocations,
-      backgroundBox
+        characterHook.updatePosition({
+            delta,
+            keysPressed: keysPressed.value,
+            raycaster,
+            collidableObjects,
+            castleLocations,
+            backgroundBox
+        });
+
+    const detectionRadius = 3.0; // 吹き出しを表示する半径。この値を調整してください
+    let closestCastle = null;
+    let minDistance = Infinity;
+    const characterPosition = characterHook.character.position;
+
+    // 全ての村との距離を計算し、最も近い村を探す
+    castleLocations.forEach(location => {
+        const castlePos = new THREE.Vector3(location.x, characterPosition.y, location.z);
+        const distance = characterPosition.distanceTo(castlePos);
+        if (distance < minDistance) {
+            minDistance = distance;
+            closestCastle = location;
+        }
     });
 
-    // 衝突結果に応じて吹き出しを更新
-    if (hitInfo) {
-      speechBubble.value.visible = true;
-      speechBubble.value.text = hitInfo.name;
-      collisionTargetObject = hitInfo.object;
+    // 最も近い村が検出範囲内にあるかチェック
+    if (closestCastle && minDistance < detectionRadius) {
+        // 範囲内なら吹き出しを表示
+        speechBubble.value.visible = true;
+        speechBubble.value.text = closestCastle.name;
+        collisionTargetObject = closestCastle.object; // 吹き出しの位置決めに使うオブジェクト
     } else {
-      speechBubble.value.visible = false;
-      collisionTargetObject = null;
+        // 範囲外なら吹き出しを非表示
+        speechBubble.value.visible = false;
+        collisionTargetObject = null;
     }
 
     updateSpeechBubble();
@@ -449,7 +466,10 @@ function updatePersistentLabels() {
 // === UI ロジック ===
 function displayQuestion() {
     const currentCastle = castleLocations[currentQuestionIndex];
-    questionText.value = `2-1で関所Cに行けば、港町へ辿り着けると分かった。${currentCastle.location}の住所は何でしょうか。`;
+
+    questionText.value = `2-1で関所Cに行けば、港町へ辿り着けると分かった。
+    ${currentCastle.location}の住所は何でしょうか。`;
+
     feedbackText.value = '';
     userAnswer.value = '';
     isCorrect.value = false;
@@ -479,12 +499,11 @@ function submitAnswer() {
 
 // 解説モーダルの表示
 function showExplanation() {
-    explanationText.value = explanationText.value = '無事に港町へと辿り着ける2つの関所どれかわかったね！\n\n' +
-                                                    '今回の冒険で、君はネットワークの道案内役、「ルータ」の仕組みを体験したんだ。\n' +
-                                                    '君が通ってきた『関所』は、ネットワークの世界ではデータを次の場所へと中継する「ルータ」という機械なんだよ。\n\n' +
-                                                    '2-1で君が門番に正しい行き先を尋ねたように、ルータも「ルーティングテーブル」という名の道案内表を持っているんだ。\n' +
-                                                    '桃太郎（パケット）がやって来ると、ルータはその最終目的地（港町）を見て、「よし、次はあっちの関所だ！」と最適な次の道を判断して送り出してくれるんだよ。\n\n' +
-                                                    'データが世界中を旅して正確に届くのは、たくさんのルータたちが賢くバケツリレーをしてくれているおかげなんだね！';
+    explanationText.value = explanationText.value = `港町へ続く正しい関所の IPアドレス が分かったね！
+
+    今回の冒険では、ネットワークの道案内役 「ルータ」 の仕組みを学んだんだ。
+
+    君が通ってきた『関所』は、データを次の場所へと中継する「ルータ」のこと。そして、門番に正しい行き先を尋ねたあの行動が、ネットワークの世界で言う 「ルーティング」 なんだよ。`;
 
     isExplanationModalVisible.value = true;
     isAnswerModalVisible.value = false;
@@ -601,6 +620,11 @@ body {
   line-height: 1.5; /* 行間を調整 */
   margin-bottom: 25px; /* テキストと閉じるボタンの間隔 */
   max-width: 80vw; /* 横幅が広がりすぎないように */
+}
+
+#question-modal-text,
+#feedback-text {
+  white-space: pre-wrap; /* 改行を有効にする */
 }
 
 #modal-content,

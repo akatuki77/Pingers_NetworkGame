@@ -297,7 +297,7 @@ function animate() {
   if (characterHook.mixer) characterHook.mixer.update(delta);
 
   if (characterHook.character && background) {
-    const hitInfo = characterHook.updatePosition({
+    characterHook.updatePosition({
       delta,
       keysPressed: keysPressed.value,
       raycaster,
@@ -322,15 +322,32 @@ function animate() {
       }
     }
 
-    // 衝突結果に応じて吹き出しを更新
-    if (hitInfo) {
-      speechBubble.value.visible = true;
-      speechBubble.value.text = hitInfo.name;
-      collisionTargetObject = hitInfo.object;
-    } else {
-      speechBubble.value.visible = false;
-      collisionTargetObject = null;
-    }
+     const detectionRadius = 3.0; // 吹き出しを表示する半径。この値を調整してください
+        let closestCastle = null;
+        let minDistance = Infinity;
+        const characterPosition = characterHook.character.position;
+
+        // 全ての村との距離を計算し、最も近い村を探す
+        castleLocations.forEach(location => {
+            const castlePos = new THREE.Vector3(location.x, characterPosition.y, location.z);
+            const distance = characterPosition.distanceTo(castlePos);
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestCastle = location;
+            }
+        });
+
+        // 最も近い村が検出範囲内にあるかチェック
+        if (closestCastle && minDistance < detectionRadius) {
+            // 範囲内なら吹き出しを表示
+            speechBubble.value.visible = true;
+            speechBubble.value.text = closestCastle.name;
+            collisionTargetObject = closestCastle.object; // 吹き出しの位置決めに使うオブジェクト
+        } else {
+            // 範囲外なら吹き出しを非表示
+            speechBubble.value.visible = false;
+            collisionTargetObject = null;
+        }
 
     updateSpeechBubble();
     updatePersistentLabels();
