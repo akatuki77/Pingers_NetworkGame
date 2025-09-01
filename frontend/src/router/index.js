@@ -2,8 +2,9 @@ import { createRouter, createWebHistory } from 'vue-router'
 import TitleView from '@/views/TitleView.vue'//タイトル画面
 import SelectStory from '@/views/SelectStory.vue'//ストーリ選択画面
 import Content from '@/views/TableContent.vue'//目次の画面
-import StageOne from '@/views/StageOne.vue'//ステージ1の画面
 import Glossary from '@/views/Glossary.vue'//用語集の画面
+
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -28,9 +29,9 @@ const router = createRouter({
       component: Content,
     },
     {
-      path: '/stageOne',
-      name: 'stageOne',
-      component: StageOne,
+      path: '/Stage-1-1',
+      name: 'Stage-1-1',
+      component: () => import('@/views/StageOne.vue')
     }
   ],
 })
