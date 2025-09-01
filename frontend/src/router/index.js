@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import TitleView from '@/views/TitleView.vue'//タイトル画面
 import SelectStory from '@/views/SelectStory.vue'//ストーリ選択画面
 import Content from '@/views/TableContent.vue'//目次の画面
+
 import Glossary from '@/views/Glossary.vue'//用語集の画面
 
 
