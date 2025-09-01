@@ -48,7 +48,7 @@ import { ref, onMounted, onUnmounted } from "vue";
 import * as THREE from "three";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+// import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import BackButton from "@/components/BackButton.vue";
 import { useCharacterKeymap } from "@/composable/useCharacterKeymap.js";
@@ -88,7 +88,7 @@ let collisionTargetObject = null;
 // クイズ情報
 const castleLocations = [
     { name: "きびだんごが食べたいな...", location: "サル", x: -1, z: 6, object: null },
-    { name: "きびだんごが食べたいな...", location: "キジ", x: 2, z: 2, object: null },
+    { name: "きびだんごが食べたいな...", location: "キジ", x: 3, z: -3, object: null },
 ];
 
 const Objects = [
@@ -99,7 +99,7 @@ let animationFrameId;
 const router = useRouter(); // routerインスタンスを取得
 const isTransitionButtonVisible = ref(false); // ボタンの表示状態を管理
 
-// 2-2へ遷移ボタンのキャラクターの当たり判定用の箱を準備
+// 3-2へ遷移ボタンのキャラクターの当たり判定用の箱を準備
 const characterBox = new THREE.Box3();
 
 // === 初期化処理 ===
@@ -151,7 +151,7 @@ function initThree() {
 
   controls = new OrbitControls(camera, renderer.domElement);
   controls.target.set(0, 1, 0);
-  // controls.enabled = false;
+  controls.enabled = false;
   controls.update();
 
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
@@ -170,12 +170,12 @@ function initThree() {
   scene.add(directionalLight);
 }
 
-// === モデル読み込み ===
-function loadGltfModel(path) {
-  return new Promise((resolve, reject) => {
-    new GLTFLoader().load(path, resolve, undefined, reject);
-  });
-}
+// // === モデル読み込み ===
+// function loadGltfModel(path) {
+//   return new Promise((resolve, reject) => {
+//     new GLTFLoader().load(path, resolve, undefined, reject);
+//   });
+// }
 
 // OBJとMTLファイルを読み込む関数
 function loadObjModel(basePath, mtlFileName, objFileName) {
@@ -197,8 +197,8 @@ function loadModels() {
     Promise.all([
         loadObjModel('/models/stage/', 'background_portTown.mtl', 'background_portTown.obj'),
         loadObjModel('/models/object/', 'background_portTown_object.mtl', 'background_portTown_object.obj'),
-        loadGltfModel('/models/character/monkey.glb'),
-        loadGltfModel('/models/character/pheasant.glb'),
+        loadObjModel('/models/character/monkey.mtl', '/models/character/monkey.obj'),
+        loadObjModel('/models/character/pheasant.mtl', '/models/character/pheasant.obj'),
     ])
     .then(async ([Background, PortTownObject, Monkey, Pheasant]) => {
         // 背景モデルの設定
@@ -222,33 +222,22 @@ function loadModels() {
             collidableObjects.push(object);
         });
 
-        //サルのモデルを配置
+        // サルのモデルを配置
         const monkeyLocation = castleLocations[0];
-        const monkey = Monkey.scene.clone();
+        const monkey = Monkey.clone();
         monkey.scale.set(1, 1, 1);
         monkeyLocation.object = monkey;
         rayOrigin = new THREE.Vector3(monkeyLocation.x, 100, monkeyLocation.z);
         raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
         intersects = raycaster.intersectObject(background, true);
         groundY = intersects.length > 0 ? intersects[0].point.y : 0;
-        monkey.position.set(monkeyLocation.x, groundY + 1, monkeyLocation.z);
+        monkey.position.set(monkeyLocation.x, groundY + 4, monkeyLocation.z);
         scene.add(monkey);
         collidableObjects.push(monkey);
 
-        // const gatekeeper = loadedGatekeeper.clone();
-        // gatekeeper.scale.set(0.7, 0.7, 0.7);
-        // keeperLocations.object = gatekeeper;
-        // rayOrigin = new THREE.Vector3(keeperLocations.x, 100, keeperLocations.z);
-        // raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
-        // intersects = raycaster.intersectObject(background, true);
-        // groundY = intersects.length > 0 ? intersects[0].point.y : 0;
-        // gatekeeper.position.set(keeperLocations.x, groundY - 4.8, keeperLocations.z);
-        // scene.add(gatekeeper);
-        // collidableObjects.push(gatekeeper);
-
-        //キジのモデルを配置
+        // キジのモデルを配置
         const pheasantLocation = castleLocations[1];
-        const pheasant = Pheasant.scene.clone();
+        const pheasant = Pheasant.clone();
         pheasant.scale.set(1, 1, 1);
         pheasantLocation.object = pheasant;
         rayOrigin = new THREE.Vector3(pheasantLocation.x, 100, pheasantLocation.z);
