@@ -412,7 +412,7 @@ function hideQuestionModal() {
 
 function goToStageTwoTwo() {
   // ★ '/stage-2-2' の部分は、実際のルート設定に合わせて変更してください
-  router.push('/StageTwoPartTwo');
+  router.push('/Stage-2-2');
 }
 </script>
 
