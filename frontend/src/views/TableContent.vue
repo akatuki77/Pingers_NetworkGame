@@ -41,7 +41,6 @@
         <p class="summary-text">{{ currentStory.summary }}</p>
       </template>
     </div>
-
   </div>
 </template>
 
@@ -59,38 +58,39 @@ import BackButton from '@/components/BackButton.vue';
 const router = useRouter();
 const route = useRoute();
 
+// ★ 変更点: subChaptersにrouteNameプロパティを追加
 const storyContent = {
   '1': {
     title: 'ももたろう',
-    summary: '昔々、ある所に桃から生まれた男の子、桃太郎がいました。鬼ヶ島にいる鬼を退治するため、旅に出る物語です。',
+    summary: `昔々、ある所に桃から生まれた男の子、桃太郎がいました。\n鬼ヶ島にいる鬼を退治するため、旅に出る物語です。`,
     chapter: [
       {
         number: '第一章',
         name: '刀購入編',
         subChapters: [
-          // ★★★ subChaptersにあらすじ(summary) ★★★
-          { id: '1-1', title: '鍛冶の村', summary: 'あらすじ' },
+          { id: '1-1', title: '鍛冶の村', summary: 'あらすじ', routeName: 'Stage-1-1' },
         ]
       },
-      { number: '第二章',
+      {
+        number: '第二章',
         name: '港町編',
         subChapters: [
-          { id: '2-1', title: 'タイトル', summary: 'あらすじ' },
-          { id: '2-2', title: 'タイトル', summary: 'あらすじ' }
+          { id: '2-1', title: 'タイトル', summary: 'あらすじ', routeName: 'Stage-2-1' },
+          // { id: '2-2', title: 'タイトル', summary: 'あらすじ', routeName: 'Stage-2-2' },
         ]
       },
-      { number: '第三章',
+      {
+        number: '第三章',
         name: '仲間集め編',
         subChapters: [
-          { id: '3-1', title: 'タイトル', summary: 'あらすじ' },
-          { id: '3-2', title: 'タイトル', summary: 'あらすじ' },
+          // { id: '3-1', title: 'タイトル', summary: 'あらすじ', routeName: 'Stage-3-1' },
         ]
       },
-      { number: '第四章',
+      {
+        number: '第四章',
         name: '鬼ヶ島編',
         subChapters: [
-          { id: '4-1', title: 'タイトル', summary: 'あらすじ' },
-          { id: '4-2', title: 'タイトル', summary: 'あらすじ' },
+          // { id: '4-1', title: 'タイトル', summary: 'あらすじ', routeName: 'Stage-4-1' },
         ]
       },
     ],
@@ -104,29 +104,32 @@ const container = ref(null);
 const storyOverlay = ref(null);
 const subChapterOverlay = ref(null);
 const selectedChapter = ref(null);
-const selectedSubChapter = ref(null); // ★★★ 選択されたサブチャプターの状態を追加 ★★★
+const selectedSubChapter = ref(null);
 
 // --- クリック処理 ---
 const selectChapter = (chapter) => {
   selectedChapter.value = (selectedChapter.value === chapter) ? null : chapter;
-  selectedSubChapter.value = null; // 章を切り替えたらサブチャプターの選択はリセット
+  selectedSubChapter.value = null;
 };
 
-// ★★★ サブチャプターを選択する関数を新設 ★★★
 const selectSubChapter = (subChapter) => {
   selectedSubChapter.value = subChapter;
 };
 
-// ステージに移動する関数（変更なし）
+// ★ 変更点: router.pushを名前付きルートに変更
 const onClickSubChapter = () => {
-  router.push(`/stageOne`);
+  if (selectedSubChapter.value && selectedSubChapter.value.routeName) {
+    router.push({ name: selectedSubChapter.value.routeName });
+  } else {
+    console.error('遷移先のrouteNameがデータに設定されていません。');
+  }
 };
 
 const resetSelection = () => {
   selectedChapter.value = null;
 };
 
-// --- Three.jsの準備 (省略) ---
+// --- Three.jsの準備 (変更なし) ---
 let renderer, css3dRenderer, scene, camera, model, storyLabel, subChapterLabel, animationId;
 watch(currentStory, () => { selectedChapter.value = null; });
 const init = () => {
@@ -210,7 +213,6 @@ onUnmounted(() => {
   overflow: hidden;
   position: relative;
 }
-
 .canvas-container {
   position: absolute;
   top: 0;
@@ -218,7 +220,6 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
 }
-
 .story-overlay,
 .sub-chapter-overlay {
   display: flex;
@@ -228,17 +229,14 @@ onUnmounted(() => {
   border-radius: 10px;
   pointer-events: none;
 }
-
 .story-overlay {
   width: 23em;
   height: 33em;
 }
-
 .sub-chapter-overlay {
   width: 18em;
   height: 33em;
 }
-
 .story-title {
   font-size: 3rem;
   font-weight: bold;
@@ -247,17 +245,15 @@ onUnmounted(() => {
   cursor: pointer;
   pointer-events: auto;
 }
-
 .story-title:hover {
   color: #555;
 }
-
 .summary-text {
-  font-size: 1.2em;
+  font-size: 1.5em;
   line-height: 1.6;
   padding: 1rem;
+  white-space: pre-wrap;
 }
-
 .chapter-list {
   display: flex;
   flex-direction: column;
@@ -270,11 +266,9 @@ onUnmounted(() => {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-
 .chapter-list::-webkit-scrollbar {
   display: none;
 }
-
 .chapter-list li {
   display: flex;
   flex-direction: column;
@@ -284,11 +278,9 @@ onUnmounted(() => {
   margin-bottom: 0.5em;
   border-radius: 5px;
 }
-
 .chapter-list li:hover {
   background-color: rgba(0, 0, 0, 0.05);
 }
-
 .chapter {
   font-size: 0.8em;
   font-weight: bold;
@@ -296,18 +288,15 @@ onUnmounted(() => {
   padding-bottom: 1em;
   width: fit-content;
 }
-
 .edited {
   font-size: 1.5em;
   font-weight: bold;
 }
-
 .sub-chapter-list {
   list-style: none;
   padding: 0;
   margin: 0;
 }
-
 .sub-chapter-list li {
   display: flex;
   gap: 0.5em;
@@ -318,16 +307,12 @@ onUnmounted(() => {
   transition: background-color 0.2s;
   pointer-events: auto;
 }
-
 .sub-chapter-list li:hover {
   background-color: rgba(0, 0, 0, 0.1);
 }
-
 .sub-chapter-list li span:first-child {
   font-weight: bold;
 }
-
-/* ★★★ あらすじ表示用のスタイル ★★★ */
 .synopsis-view {
   display: flex;
   flex-direction: column;
