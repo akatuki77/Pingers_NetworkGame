@@ -109,7 +109,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.500000
 d 1.000000
 illum 1
-map_Kd C:/Users/hanpe/Downloads/MagicaVoxel-0.99.7.1-win64/MagicaVoxel-0.99.7.1-win64/export/boat.png
+map_Kd boat.png
 
 newmtl palette.013
 Ns 0.000000
