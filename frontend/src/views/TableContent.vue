@@ -83,7 +83,7 @@ const storyContent = {
         number: '第三章',
         name: '仲間集め編',
         subChapters: [
-          // { id: '3-1', title: 'タイトル', summary: 'あらすじ', routeName: 'Stage-3-1' },
+          { id: '3-1', title: 'タイトル', summary: 'あらすじ', routeName: 'Stage-3-1' },
         ]
       },
       {

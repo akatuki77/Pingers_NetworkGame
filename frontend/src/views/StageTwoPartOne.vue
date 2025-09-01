@@ -182,9 +182,9 @@ function loadObjModel(basePath, mtlFileName, objFileName) {
 // モデルの読み込みとシーンへの追加
 function loadModels() {
     Promise.all([
-        loadObjModel('/models/character/', 'background_gate_oneRoad.mtl', 'background_gate_oneRoad.obj'),
-        loadObjModel('/models/character/', 'background_gate-1.mtl', 'background_gate-1.obj'),
-        loadObjModel('/models/character/', 'sekisyo-0.mtl', 'sekisyo-0.obj'),
+        loadObjModel('/models/stage/', 'background_gate_oneRoad.mtl', 'background_gate_oneRoad.obj'),
+        loadObjModel('/models/stage/', 'background_gate-1.mtl', 'background_gate-1.obj'),
+        loadObjModel('/models/object/', 'sekisyo-0.mtl', 'sekisyo-0.obj'),
         loadObjModel('/models/character/', 'gatekeeper.mtl', 'gatekeeper.obj'),
     ])
     .then(async ([Background, Background2, loadedSekisyo, loadedGatekeeper]) => {
@@ -238,18 +238,17 @@ function loadModels() {
         scene.add(sekisyo);
         collidableObjects.push(sekisyo);
 
-        castleLocations.forEach(location => {
-            const gatekeeper = loadedGatekeeper.clone();
-            gatekeeper.scale.set(0.7, 0.7, 0.7);
-            location.object = gatekeeper;
-            rayOrigin = new THREE.Vector3(location.x, 100, location.z);
-            raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
-            intersects = raycaster.intersectObject(background, true);
-            groundY = intersects.length > 0 ? intersects[0].point.y : 0;
-            gatekeeper.position.set(location.x, groundY - 4.8, location.z);
-            scene.add(gatekeeper);
-            collidableObjects.push(gatekeeper);
-        });
+        const keeperLocations = castleLocations[0];
+        const gatekeeper = loadedGatekeeper.clone();
+        gatekeeper.scale.set(0.7, 0.7, 0.7);
+        keeperLocations.object = gatekeeper;
+        rayOrigin = new THREE.Vector3(keeperLocations.x, 100, keeperLocations.z);
+        raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
+        intersects = raycaster.intersectObject(background, true);
+        groundY = intersects.length > 0 ? intersects[0].point.y : 0;
+        gatekeeper.position.set(keeperLocations.x, groundY - 4.8, keeperLocations.z);
+        scene.add(gatekeeper);
+        collidableObjects.push(gatekeeper);
 
         scene.traverse(child => {
           if (child.isMesh) {

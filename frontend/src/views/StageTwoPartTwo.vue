@@ -222,11 +222,11 @@ function loadObjModel(basePath, mtlFileName, objFileName) {
 // モデルの読み込みとシーンへの追加
 function loadModels() {
     Promise.all([
-        loadObjModel('/models/character/', 'background_gate-1.mtl', 'background_gate-1.obj'),
-        loadObjModel('/models/character/', 'background_gate_oneRoad.mtl', 'background_gate_oneRoad.obj'),
-        loadObjModel('/models/character/', 'sekisyo-0.mtl', 'sekisyo-0.obj'),
+        loadObjModel('/models/stage/', 'background_gate-1.mtl', 'background_gate-1.obj'),
+        loadObjModel('/models/stage/', 'background_gate_oneRoad.mtl', 'background_gate_oneRoad.obj'),
+        loadObjModel('/models/object/', 'sekisyo-0.mtl', 'sekisyo-0.obj'),
         loadObjModel('/models/character/', 'gatekeeper.mtl', 'gatekeeper.obj'),
-        loadObjModel('/models/character/', 'village_lake.mtl', 'village_lake.obj')
+        loadObjModel('/models/object/', 'village_lake.mtl', 'village_lake.obj')
     ])
     .then(async ([Background, Background2, loadedSekisyo, loadedGatekeeper, loadedLake]) => {
         // 背景モデルの設定

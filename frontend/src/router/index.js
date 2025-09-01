@@ -43,7 +43,17 @@ const router = createRouter({
       path: '/Stage-2-2',
       name: 'Stage-2-2',
       component: () => import('@/views/StageTwoPartTwo.vue')
-    }
+    },
+    {
+      path: '/Stage-3-1',
+      name: 'Stage-3-1',
+      component: () => import('@/views/StageThreePartOne.vue')
+    },
+    {
+      path: '/Stage-3-2',
+      name: 'Stage-3-2',
+      component: () => import('@/views/StageThreePartTwo.vue')
+    },
   ],
 })
 
