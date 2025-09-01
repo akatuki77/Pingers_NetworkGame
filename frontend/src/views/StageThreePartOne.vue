@@ -38,6 +38,10 @@
     <div v-if="isTransitionButtonVisible" class="transition-button-container">
       <button @click="goToStageTwoTwo">2-2へ進む</button>
     </div>
+
+    <div v-if="isDangoButtonVisible" class="action-button-container">
+      <button @click="giveDango">きびだんごを渡す</button>
+    </div>
   </div>
 
   <BackButton to="/content/1" />
@@ -48,7 +52,6 @@ import { ref, onMounted, onUnmounted } from "vue";
 import * as THREE from "three";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
-// import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import BackButton from "@/components/BackButton.vue";
 import { useCharacterKeymap } from "@/composable/useCharacterKeymap.js";
@@ -64,6 +67,7 @@ const speechBubble = ref({ visible: false, text: "", x: 0, y: 0 });
 const isCorrect = ref(false);
 const persistentLabels = ref([]); // 常時表示ラベル用の配列
 const isQuestionModalVisible = ref(false);
+const isDangoButtonVisible = ref(false);
 
 // クイズデータ
 const questionText = ref("");
@@ -71,8 +75,7 @@ const userAnswer = ref("");
 const feedbackText = ref("");
 
 // === three.js関連の変数 (リアクティブにしない) ===
-let scene, camera, renderer, controls,  background, backgroundBox, triggerZoneBox;
-// let idleAction, walkAction;
+let scene, camera, renderer, controls,  background, backgroundBox, triggerZoneBox, background2;
 const collidableObjects = [];
 const clock = new THREE.Clock();
 const raycaster = new THREE.Raycaster();
@@ -85,14 +88,18 @@ useCharacterKeymap(characterHook, keysPressed);
 // 衝突したオブジェクトを保持
 let collisionTargetObject = null;
 
-// クイズ情報
-const castleLocations = [
-    { name: "きびだんごが食べたいな...", location: "サル", x: -1, z: 6, object: null },
-    { name: "きびだんごが食べたいな...", location: "キジ", x: 3, z: -3, object: null },
-];
+let closestAnimal = null;
 
-const Objects = [
-    { x: 0, z: -0.2, object: null }
+// クイズ情報
+const castleLocations = ref([
+    { name: "きびだんごが食べたいウキ！", location: "サル", x: -11.2, z: -2, object: null, hasDango: false, Message: "ウキッ！うまい！このきびだんごの味、忘れないウキ！オイラ、桃太郎さんについていく！" },
+    { name: "きびだんごが食べたいケーン！", location: "キジ", x: 2.5, z: 7, object: null, hasDango: false, Message: "ケーン！これはこれは…。あなた様の家来になりましょう。鬼ヶ島までお供いたしますぞ！" },
+    { name: "きびだんごが食べたいワン！", location: "イヌ", x: -6.9, z: 4.5, object: null, hasDango: false, Message: "ワン！なんて美味しいんだ…！このご恩、忘れませんワン。鬼退治、ぜひ手伝わせてください！" },
+]);
+
+const ObjectsLocations = [
+    { x: 0, z: -0.2, object: null }, // 港町
+    { x: 0.35, z: -25.6, object: null }  // 鬼ヶ島
 ];
 let animationFrameId;
 
@@ -170,13 +177,6 @@ function initThree() {
   scene.add(directionalLight);
 }
 
-// // === モデル読み込み ===
-// function loadGltfModel(path) {
-//   return new Promise((resolve, reject) => {
-//     new GLTFLoader().load(path, resolve, undefined, reject);
-//   });
-// }
-
 // OBJとMTLファイルを読み込む関数
 function loadObjModel(basePath, mtlFileName, objFileName) {
     return new Promise((resolve, reject) => {
@@ -196,34 +196,84 @@ function loadObjModel(basePath, mtlFileName, objFileName) {
 function loadModels() {
     Promise.all([
         loadObjModel('/models/stage/', 'background_portTown.mtl', 'background_portTown.obj'),
+        loadObjModel('/models/stage/', 'background_onigashima.mtl', 'background_onigashima.obj'),
         loadObjModel('/models/object/', 'background_portTown_object.mtl', 'background_portTown_object.obj'),
-        loadObjModel('/models/character/monkey.mtl', '/models/character/monkey.obj'),
-        loadObjModel('/models/character/pheasant.mtl', '/models/character/pheasant.obj'),
+        loadObjModel('/models/object/', 'background_onigashima_object.mtl', 'background_onigashima_object.obj'),
+        loadObjModel('/models/character/', 'monkey.mtl', 'monkey.obj'),
+        loadObjModel('/models/character/', 'pheasant.mtl', 'pheasant.obj'),
+        loadObjModel('/models/character/', 'dog.mtl', 'dog.obj'),
     ])
-    .then(async ([Background, PortTownObject, Monkey, Pheasant]) => {
+    .then(async ([Background, Background2, PortTownObject, OniObject, Monkey, Pheasant, Dog]) => {
+        // 背景モデルの設定
+        background = Background;
+        scene.add(background);
+        collidableObjects.push(background);
         // 背景モデルの設定
         background = Background;
         scene.add(background);
         collidableObjects.push(background);
 
+        const background1Box = new THREE.Box3().setFromObject(background);
+        const background1Size = new THREE.Vector3();
+        background1Box.getSize(background1Size);
+        background.position.set(0, 0, 0);
+
+        const background2Box = new THREE.Box3().setFromObject(Background2);
+        const background2Size = new THREE.Vector3();
+        background2Box.getSize(background2Size);
+
+        background2 = Background2;
+
+        const newZPosition = (-background1Size.z / 2) + (-background2Size.z / 2);
+        background2.position.set(0, 0, newZPosition);
+
+        scene.add(background2);
+        collidableObjects.push(background2);
+
+        // 2つの背景のつなぎ目に「見えないゾーン」を作成
+        const zonePositionZ = -background1Size.z / 2; // つなぎ目のZ座標
+        // ゾーンのジオメトリ（幅、高さ、奥行き）
+        const zoneGeometry = new THREE.BoxGeometry(background1Size.x, 10, 2);
+        // ゾーンのマテリアル（透明にする）
+        const zoneMaterial = new THREE.MeshBasicMaterial({ visible: false });
+        const triggerZone = new THREE.Mesh(zoneGeometry, zoneMaterial);
+
+        // ゾーンをつなぎ目に配置
+        triggerZone.position.set(0, 5, zonePositionZ);
+        scene.add(triggerZone);
+
+        // ゾーンの当たり判定用の箱を計算しておく
+        triggerZoneBox = new THREE.Box3().setFromObject(triggerZone);
+
         let rayOrigin, intersects, groundY;
 
-        // オブジェクトのモデルを配置
-        Objects.forEach(location => {
-            const object = PortTownObject.clone();
-            object.scale.set(1, 1, 1);
-            location.object = object;
-            rayOrigin = new THREE.Vector3(location.x, 100, location.z);
-            raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
-            intersects = raycaster.intersectObject(background, true);
-            groundY = intersects.length > 0 ? intersects[0].point.y : 0;
-            object.position.set(location.x, groundY - 1.15, location.z);
-            scene.add(object);
-            collidableObjects.push(object);
-        });
+        // 港町オブジェクトのモデルを配置
+        const PortLocation = ObjectsLocations[0];
+        const object = PortTownObject.clone();
+        object.scale.set(1, 1, 1);
+        PortLocation.object = object;
+        rayOrigin = new THREE.Vector3(PortLocation.x, 100, PortLocation.z);
+        raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
+        intersects = raycaster.intersectObject(background, true);
+        groundY = intersects.length > 0 ? intersects[0].point.y : 0;
+        object.position.set(PortLocation.x, groundY - 1.15, PortLocation.z);
+        scene.add(object);
+        collidableObjects.push(object);
+
+        // 鬼ヶ島オブジェクトのモデルを配置
+        const OniLocation = ObjectsLocations[1];
+        const oniObject = OniObject.clone();
+        oniObject.scale.set(1, 1, 1);
+        OniLocation.object = oniObject;
+        rayOrigin = new THREE.Vector3(OniLocation.x, 100, OniLocation.z);
+        raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
+        intersects = raycaster.intersectObject(background, true);
+        groundY = intersects.length > 0 ? intersects[0].point.y : 0;
+        oniObject.position.set(OniLocation.x, groundY, OniLocation.z);
+        scene.add(oniObject);
 
         // サルのモデルを配置
-        const monkeyLocation = castleLocations[0];
+        const monkeyLocation = castleLocations.value[0];
         const monkey = Monkey.clone();
         monkey.scale.set(1, 1, 1);
         monkeyLocation.object = monkey;
@@ -231,22 +281,37 @@ function loadModels() {
         raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
         intersects = raycaster.intersectObject(background, true);
         groundY = intersects.length > 0 ? intersects[0].point.y : 0;
-        monkey.position.set(monkeyLocation.x, groundY + 4, monkeyLocation.z);
+        monkey.position.set(monkeyLocation.x, groundY + 2.15, monkeyLocation.z);
+        monkey.rotation.y = Math.PI / 2; // 反転
         scene.add(monkey);
         collidableObjects.push(monkey);
 
         // キジのモデルを配置
-        const pheasantLocation = castleLocations[1];
+        const pheasantLocation = castleLocations.value[1];
         const pheasant = Pheasant.clone();
-        pheasant.scale.set(1, 1, 1);
+        pheasant.scale.set(0.7, 0.7, 0.7);
         pheasantLocation.object = pheasant;
         rayOrigin = new THREE.Vector3(pheasantLocation.x, 100, pheasantLocation.z);
         raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
         intersects = raycaster.intersectObject(background, true);
         groundY = intersects.length > 0 ? intersects[0].point.y : 0;
-        pheasant.position.set(pheasantLocation.x, groundY + 1, pheasantLocation.z);
+        pheasant.position.set(pheasantLocation.x, groundY, pheasantLocation.z);
         scene.add(pheasant);
         collidableObjects.push(pheasant);
+
+        // イヌのモデルを配置
+        const dogLocation = castleLocations.value[2];
+        const dog = Dog.clone();
+        dog.scale.set(1, 1, 1);
+        dogLocation.object = dog;
+        rayOrigin = new THREE.Vector3(dogLocation.x, 100, dogLocation.z);
+        raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
+        intersects = raycaster.intersectObject(background, true);
+        groundY = intersects.length > 0 ? intersects[0].point.y : 0;
+        dog.position.set(dogLocation.x, groundY, dogLocation.z);
+        dog.rotation.y = Math.PI / 2; // 反転
+        scene.add(dog);
+        collidableObjects.push(dog);
 
         scene.traverse(child => {
           if (child.isMesh) {
@@ -259,7 +324,7 @@ function loadModels() {
         await characterHook.loadCharacter(scene);
 
         // 常時表示ラベルを初期化
-        persistentLabels.value = castleLocations.map(loc => ({
+        persistentLabels.value = castleLocations.value.map(loc => ({
           text: loc.location, // 村の名前を設定
           x: 0,
           y: 0,
@@ -286,6 +351,13 @@ function onWindowResize() {
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
+// きびだんごを渡す関数を新しく作成
+function giveDango() {
+  if (closestAnimal && !closestAnimal.hasDango) {
+    closestAnimal.hasDango = true; // 状態を「貰った」に更新
+  }
+}
+
 // アニメーションループ
 function animate() {
   animationFrameId = requestAnimationFrame(animate);
@@ -293,7 +365,7 @@ function animate() {
 
   if (characterHook.mixer) characterHook.mixer.update(delta);
 
-  if (characterHook.character && background) {
+  if (characterHook.character) {
     characterHook.updatePosition({
       delta,
       keysPressed: keysPressed.value,
@@ -319,32 +391,41 @@ function animate() {
       }
     }
 
-     const detectionRadius = 3.0; // 吹き出しを表示する半径。この値を調整してください
-        let closestCastle = null;
-        let minDistance = Infinity;
-        const characterPosition = characterHook.character.position;
+    const detectionRadius = 3.0; // 吹き出しを表示する半径。この値を調整してください
+    let minDistance = Infinity;
+    const characterPosition = characterHook.character.position;
+    // let closestAnimal = null;
 
-        // 全ての村との距離を計算し、最も近い村を探す
-        castleLocations.forEach(location => {
-            const castlePos = new THREE.Vector3(location.x, characterPosition.y, location.z);
-            const distance = characterPosition.distanceTo(castlePos);
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestCastle = location;
-            }
-        });
-
-        // 最も近い村が検出範囲内にあるかチェック
-        if (closestCastle && minDistance < detectionRadius) {
-            // 範囲内なら吹き出しを表示
-            speechBubble.value.visible = true;
-            speechBubble.value.text = closestCastle.name;
-            collisionTargetObject = closestCastle.object; // 吹き出しの位置決めに使うオブジェクト
-        } else {
-            // 範囲外なら吹き出しを非表示
-            speechBubble.value.visible = false;
-            collisionTargetObject = null;
+    // 全ての動物との距離を計算し、最も近いものを探す
+    castleLocations.value.forEach(location => {
+        const animalPos = new THREE.Vector3(location.x, characterPosition.y, location.z);
+        const distance = characterPosition.distanceTo(animalPos);
+        if (distance < minDistance) {
+            minDistance = distance;
+            closestAnimal = location;
         }
+    });
+
+    // 最も近い動物が検出範囲内にあるかチェック
+    if (closestAnimal && minDistance < detectionRadius) {
+        // ★ 状態に応じて表示するテキストとボタンを切り替える
+        if (closestAnimal.hasReceivedDango) {
+            // 既に仲間になっている場合
+            speechBubble.value.text = closestAnimal.Message;
+            isDangoButtonVisible.value = false; // ボタンは非表示
+        } else {
+            // まだ仲間にする前の場合
+            speechBubble.value.text = closestAnimal.name;
+            isDangoButtonVisible.value = true; // ボタンを表示
+        }
+        speechBubble.value.visible = true;
+        collisionTargetObject = closestAnimal.object;
+    } else {
+        // 範囲外なら全て非表示
+        speechBubble.value.visible = false;
+        isDangoButtonVisible.value = false;
+        collisionTargetObject = null;
+    }
 
     updateSpeechBubble();
     updatePersistentLabels();
@@ -393,7 +474,7 @@ function updatePersistentLabels() {
 
 // === UI ロジック ===
 function displayQuestion() {
-    questionText.value = `関所Aにいる門番に港町へ辿り着ける関所の住所を教えてもらう。`;
+    questionText.value = `動物達にきびだんごを渡して鬼退治へ向かう仲間になろう`;
     feedbackText.value = '';
     userAnswer.value = '';
     isCorrect.value = false;
@@ -408,7 +489,7 @@ function hideQuestionModal() {
 }
 
 function goToStageTwoTwo() {
-  // ★ '/stage-2-2' の部分は、実際のルート設定に合わせて変更してください
+  // '/stage-3-2' の部分は、実際のルート設定に合わせて変更してください
   router.push('/Stage-3-2');
 }
 </script>
@@ -588,5 +669,32 @@ body {
   background-color: rgba(255, 255, 255, 0.9);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   border: 1px solid #ccc;
+}
+
+.action-button-container {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  text-align: center;
+}
+
+.action-button-container button {
+  padding: 12px 25px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 30px;
+  border: none;
+  background-color: #ff69b4; /* ホットピンク */
+  color: white;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+}
+
+.action-button-container button:hover {
+  background-color: #ff85c1;
+  transform: translateY(-2px);
 }
 </style>
