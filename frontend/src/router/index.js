@@ -33,6 +33,36 @@ const router = createRouter({
       path: '/Stage-1-1',
       name: 'Stage-1-1',
       component: () => import('@/views/StageOne.vue')
+    },
+    {
+      path: '/Stage-2-1',
+      name: 'Stage-2-1',
+      component: () => import('@/views/StageTwoPartOne.vue')
+    },
+    {
+      path: '/Stage-2-2',
+      name: 'Stage-2-2',
+      component: () => import('@/views/StageTwoPartTwo.vue')
+    },
+    {
+      path: '/Stage-3-1',
+      name: 'Stage-3-1',
+      component: () => import('@/views/StageThreePartOne.vue')
+    },
+    {
+      path: '/Stage-3-2',
+      name: 'Stage-3-2',
+      component: () => import('@/views/StageThreePartTwo.vue')
+    },
+    {
+      path: '/Stage-4-1',
+      name: 'Stage-4-1',
+      component: () => import('@/views/StageFourPartOne.vue')
+    },
+    {
+      path: '/Stage-4-2',
+      name: 'Stage-4-2',
+      component: () => import('@/views/StageFourPartTwo.vue')
     }
   ],
 })

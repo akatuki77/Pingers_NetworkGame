@@ -92,10 +92,10 @@ function loadStageModels() {
     ];
 
     Promise.all([
-        loadObjModel('/models/character/', 'background_village.mtl', 'background_village.obj'),
-        loadObjModel('/models/character/', 'village.mtl', 'village.obj'),
-        loadObjModel('/models/character/', 'village_lake.mtl', 'village_lake.obj'),
-        loadGltfModel('/models/character/flower.glb'),
+        loadObjModel('/models/stage/', 'background_village.mtl', 'background_village.obj'),
+        loadObjModel('/models/object/', 'village.mtl', 'village.obj'),
+        loadObjModel('/models/object/', 'village_lake.mtl', 'village_lake.obj'),
+        loadGltfModel('/models/object/flower.glb'),
     ])
     .then(([background, loadedVillage, loadedLake, loadedFlower]) => {
         // 1. 地面を追加
