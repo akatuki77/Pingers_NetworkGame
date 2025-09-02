@@ -36,7 +36,7 @@
     </div>
 
     <div v-if="isTransitionButtonVisible" class="transition-button-container">
-      <button @click="goToStageTwoTwo">2-2へ進む</button>
+      <button @click="goToStageThreePartTwo">3-2へ進む</button>
     </div>
 
     <div v-if="isDangoButtonVisible" class="action-button-container">
@@ -208,10 +208,6 @@ function loadModels() {
         background = Background;
         scene.add(background);
         collidableObjects.push(background);
-        // 背景モデルの設定
-        background = Background;
-        scene.add(background);
-        collidableObjects.push(background);
 
         const background1Box = new THREE.Box3().setFromObject(background);
         const background1Size = new THREE.Vector3();
@@ -229,21 +225,6 @@ function loadModels() {
 
         scene.add(background2);
         collidableObjects.push(background2);
-
-        // 2つの背景のつなぎ目に「見えないゾーン」を作成
-        const zonePositionZ = -background1Size.z / 2; // つなぎ目のZ座標
-        // ゾーンのジオメトリ（幅、高さ、奥行き）
-        const zoneGeometry = new THREE.BoxGeometry(background1Size.x, 10, 2);
-        // ゾーンのマテリアル（透明にする）
-        const zoneMaterial = new THREE.MeshBasicMaterial({ visible: false });
-        const triggerZone = new THREE.Mesh(zoneGeometry, zoneMaterial);
-
-        // ゾーンをつなぎ目に配置
-        triggerZone.position.set(0, 5, zonePositionZ);
-        scene.add(triggerZone);
-
-        // ゾーンの当たり判定用の箱を計算しておく
-        triggerZoneBox = new THREE.Box3().setFromObject(triggerZone);
 
         let rayOrigin, intersects, groundY;
 
@@ -351,10 +332,24 @@ function onWindowResize() {
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
+// 全ての動物がきびだんごを貰ったかチェックする関数
+function checkAllAlliesGathered() {
+  // .every()は、配列の全ての要素が条件を満たす場合にtrueを返す
+  const allAllied = castleLocations.value.every(animal => animal.hasDango === true);
+
+  if (allAllied) {
+    // 全員が仲間になっていたら、遷移ボタンを表示する
+    isTransitionButtonVisible.value = true;
+  }
+}
+
 // きびだんごを渡す関数を新しく作成
 function giveDango() {
   if (closestAnimal && !closestAnimal.hasDango) {
     closestAnimal.hasDango = true; // 状態を「貰った」に更新
+
+    // 渡した直後に、全員が仲間になったかチェックする
+    checkAllAlliesGathered();
   }
 }
 
@@ -392,9 +387,9 @@ function animate() {
     }
 
     const detectionRadius = 3.0; // 吹き出しを表示する半径。この値を調整してください
+    let foundAnimalThisFrame = null;
     let minDistance = Infinity;
     const characterPosition = characterHook.character.position;
-    // let closestAnimal = null;
 
     // 全ての動物との距離を計算し、最も近いものを探す
     castleLocations.value.forEach(location => {
@@ -402,14 +397,17 @@ function animate() {
         const distance = characterPosition.distanceTo(animalPos);
         if (distance < minDistance) {
             minDistance = distance;
-            closestAnimal = location;
+            foundAnimalThisFrame = location;
         }
     });
+
+    // 全ての動物をチェックし終わった後で、グローバルな変数を「最終結果」で更新する
+    closestAnimal = foundAnimalThisFrame;
 
     // 最も近い動物が検出範囲内にあるかチェック
     if (closestAnimal && minDistance < detectionRadius) {
         // ★ 状態に応じて表示するテキストとボタンを切り替える
-        if (closestAnimal.hasReceivedDango) {
+        if (closestAnimal.hasDango) {
             // 既に仲間になっている場合
             speechBubble.value.text = closestAnimal.Message;
             isDangoButtonVisible.value = false; // ボタンは非表示
@@ -488,7 +486,7 @@ function hideQuestionModal() {
   isQuestionModalVisible.value = false;
 }
 
-function goToStageTwoTwo() {
+function goToStageThreePartTwo() {
   // '/stage-3-2' の部分は、実際のルート設定に合わせて変更してください
   router.push('/Stage-3-2');
 }
@@ -653,8 +651,10 @@ body {
 .transition-button-container {
   position: absolute;
   bottom: 50px;
-  top: 34%;
-  left: 79%;
+  /* top: 20%;
+  left: 60%; */
+  left: 51%;
+  bottom: 12%;
   transform: translateX(-50%);
   z-index: 100;
 }
@@ -674,7 +674,8 @@ body {
 .action-button-container {
   position: absolute;
   bottom: 40px;
-  left: 50%;
+  left: 51%;
+  bottom: 12%;
   transform: translateX(-50%);
   z-index: 100;
   text-align: center;

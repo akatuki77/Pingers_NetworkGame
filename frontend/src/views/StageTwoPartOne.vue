@@ -36,7 +36,7 @@
     </div>
 
     <div v-if="isTransitionButtonVisible" class="transition-button-container">
-      <button @click="goToStageTwoTwo">2-2へ進む</button>
+      <button @click="goToStageTwoPartTwo">2-2へ進む</button>
     </div>
   </div>
 
@@ -409,7 +409,7 @@ function hideQuestionModal() {
   isQuestionModalVisible.value = false;
 }
 
-function goToStageTwoTwo() {
+function goToStageTwoPartTwo() {
   // ★ '/stage-2-2' の部分は、実際のルート設定に合わせて変更してください
   router.push('/Stage-2-2');
 }
