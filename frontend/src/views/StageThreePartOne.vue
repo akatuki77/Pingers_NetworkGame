@@ -92,8 +92,8 @@ let closestAnimal = null;
 
 // クイズ情報
 const castleLocations = ref([
-    { name: "きびだんごが食べたいウキ！", location: "サル", x: -11.2, z: -2, object: null, hasDango: false, Message: "ウキッ！うまい！このきびだんごの味、忘れないウキ！オイラ、桃太郎さんについていく！" },
-    { name: "きびだんごが食べたいケーン！", location: "キジ", x: 2.5, z: 7, object: null, hasDango: false, Message: "ケーン！これはこれは…。あなた様の家来になりましょう。鬼ヶ島までお供いたしますぞ！" },
+    { name: "きびだんごが食べたいウキ！", location: "サル", x: -10, z: -2, object: null, hasDango: false, Message: "ウキッ！うまい！このきびだんごの味、忘れないウキ！オイラ、桃太郎さんについていく！" },
+    { name: "きびだんごが食べたいケーン！", location: "キジ", x: 7.4, z: 7.3, object: null, hasDango: false, Message: "ケーン！これはこれは…。あなた様の家来になりましょう。鬼ヶ島までお供いたしますぞ！" },
     { name: "きびだんごが食べたいワン！", location: "イヌ", x: -6.9, z: 4.5, object: null, hasDango: false, Message: "ワン！なんて美味しいんだ…！このご恩、忘れませんワン。鬼退治、ぜひ手伝わせてください！" },
 ]);
 
@@ -262,7 +262,7 @@ function loadModels() {
         raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
         intersects = raycaster.intersectObject(background, true);
         groundY = intersects.length > 0 ? intersects[0].point.y : 0;
-        monkey.position.set(monkeyLocation.x, groundY + 2.15, monkeyLocation.z);
+        monkey.position.set(monkeyLocation.x, groundY, monkeyLocation.z);
         monkey.rotation.y = Math.PI / 2; // 反転
         scene.add(monkey);
         collidableObjects.push(monkey);
@@ -276,7 +276,8 @@ function loadModels() {
         raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
         intersects = raycaster.intersectObject(background, true);
         groundY = intersects.length > 0 ? intersects[0].point.y : 0;
-        pheasant.position.set(pheasantLocation.x, groundY, pheasantLocation.z);
+        pheasant.position.set(pheasantLocation.x, groundY + 3.6, pheasantLocation.z);
+        pheasant.rotation.y = -Math.PI / 2; // 反転
         scene.add(pheasant);
         collidableObjects.push(pheasant);
 
