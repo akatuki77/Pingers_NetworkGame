@@ -76,7 +76,7 @@ const storyContent = {
         name: '港町編',
         subChapters: [
           { id: '2-1', title: 'タイトル', summary: 'あらすじ', routeName: 'Stage-2-1' },
-          // { id: '2-2', title: 'タイトル', summary: 'あらすじ', routeName: 'Stage-2-2' },
+          { id: '2-2', title: 'タイトル', summary: 'あらすじ', routeName: 'Stage-2-2' },
         ]
       },
       {
@@ -84,13 +84,15 @@ const storyContent = {
         name: '仲間集め編',
         subChapters: [
           { id: '3-1', title: 'タイトル', summary: 'あらすじ', routeName: 'Stage-3-1' },
+          { id: '3-2', title: 'タイトル', summary: 'あらすじ', routeName: 'Stage-3-2' },
         ]
       },
       {
         number: '第四章',
         name: '鬼ヶ島編',
         subChapters: [
-          // { id: '4-1', title: 'タイトル', summary: 'あらすじ', routeName: 'Stage-4-1' },
+          { id: '4-1', title: 'タイトル', summary: 'あらすじ', routeName: 'Stage-4-1' },
+          { id: '4-2', title: 'タイトル', summary: 'あらすじ', routeName: 'Stage-4-2' },
         ]
       },
     ],
