@@ -400,7 +400,7 @@ function updatePersistentLabels() {
 // === UI ロジック ===
 function displayQuestion() {
     const currentCastle = castleLocations[currentQuestionIndex];
-    questionText.value = `${currentCastle.location}の住所は何でしょうか。`;
+    questionText.value = `${currentCastle.location}の住所は何かな？`;
     feedbackText.value = '';
     userAnswer.value = '';
     isCorrect.value = false;

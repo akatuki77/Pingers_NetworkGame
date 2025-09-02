@@ -395,7 +395,7 @@ function updatePersistentLabels() {
 
 // === UI ロジック ===
 function displayQuestion() {
-    questionText.value = `関所Aにいる門番に港町へ辿り着ける関所の住所を教えてもらう。`;
+    questionText.value = `関所Aにいる門番に港町へ辿り着ける関所の住所を教えてもらおう！`;
     feedbackText.value = '';
     userAnswer.value = '';
     isCorrect.value = false;

@@ -473,7 +473,7 @@ function updatePersistentLabels() {
 
 // === UI ロジック ===
 function displayQuestion() {
-    questionText.value = `動物達にきびだんごを渡して鬼退治へ向かう仲間になろう`;
+    questionText.value = `動物達にきびだんごを渡して鬼退治へ向かう仲間にしよう！`;
     feedbackText.value = '';
     userAnswer.value = '';
     isCorrect.value = false;

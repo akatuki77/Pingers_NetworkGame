@@ -9,6 +9,8 @@ export function useCharacter() {
   let walkAction = null;
   // 物理・移動関連の状態をコンポーザブル内で管理
   let yVelocity = 0;
+  let xVelocity = 0; // 水平方向の速度を追加
+  let zVelocity = 0; // 水平方向の速度を追加
   const gravity = -20;
   const jumpStrength = 6; // ジャンプ力を調整
   let isGrounded = false;
@@ -16,8 +18,9 @@ export function useCharacter() {
   let targetRotationY = 0;
   const rotationSpeed = 0.1;
   const moveSpeed = 3.0;
-  const airMoveSpeed = 2.5;
+  const airMoveSpeed = 3.2; // 空中での移動速度を上げる
   const stepTolerance = 0.45; // 段差の許容範囲
+  const airResistance = 0.95; // 空中での空気抵抗
 
   function jump() {
     if (isGrounded) {
@@ -36,9 +39,12 @@ export function useCharacter() {
 
     if (groundIntersects.length > 0) {
       const groundY = groundIntersects[0].point.y;
-      if (character.position.y <= groundY + 0.1 && yVelocity <= 0) {
+      if (character.position.y <= groundY + 0.15 && yVelocity <= 0) { // 接地判定の許容範囲を広げる
         character.position.y = groundY;
         yVelocity = 0;
+        // 接地時に水平方向の速度もリセット
+        xVelocity = 0;
+        zVelocity = 0;
         isGrounded = true;
       } else {
         isGrounded = false;
@@ -57,13 +63,28 @@ export function useCharacter() {
     let hitCastleInfo = null;
 
     if(isMoving) {
-      if (keysPressed['w']) targetRotationY = -Math.PI / 2;
-      if (keysPressed['s']) targetRotationY = Math.PI / 2;
-      if (keysPressed['a']) targetRotationY = 0;
-      if (keysPressed['d']) targetRotationY = Math.PI;
+      // 同時押しに対応した移動方向の計算
+      let moveX = 0;
+      let moveZ = 0;
 
-      const targetQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, targetRotationY, 0));
-      character.quaternion.slerp(targetQuaternion, rotationSpeed);
+      if (keysPressed['w']) moveX -= 1; // 左（X軸負方向）
+      if (keysPressed['s']) moveX += 1; // 右（X軸正方向）
+      if (keysPressed['a']) moveZ += 1; // 後（Z軸正方向）
+      if (keysPressed['d']) moveZ -= 1; // 前（Z軸負方向）
+
+      // 斜め移動の場合、速度を正規化（対角線の長さを1にする）
+      if (moveX !== 0 && moveZ !== 0) {
+        const length = Math.sqrt(moveX * moveX + moveZ * moveZ);
+        moveX /= length;
+        moveZ /= length;
+      }
+
+      // 移動方向に基づいてキャラクターの向きを調整
+      if (moveX !== 0 || moveZ !== 0) {
+        targetRotationY = Math.atan2(moveX, moveZ);
+        const targetQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, targetRotationY, 0));
+        character.quaternion.slerp(targetQuaternion, rotationSpeed);
+      }
 
       const characterDirection = new THREE.Vector3();
       character.getWorldDirection(characterDirection);
@@ -77,7 +98,9 @@ export function useCharacter() {
 
       for (const point of collisionPoints) {
           const rayOrigin = point.clone().applyMatrix4(character.matrixWorld);
-          raycaster.set(rayOrigin, characterDirection);
+          // 移動方向に基づいて衝突判定の方向を設定
+          const collisionDirection = new THREE.Vector3(moveX, 0, moveZ).normalize();
+          raycaster.set(rayOrigin, collisionDirection);
           const intersects = raycaster.intersectObjects(collidableObjects, true);
 
           if (intersects.length > 0 && intersects[0].distance < 0.5) {
@@ -91,20 +114,25 @@ export function useCharacter() {
               if (foundCastle) {
                   hitCastleInfo = foundCastle;
               }
-              const heightDifference = intersects[0].point.y - character.position.y;
-              if (Math.abs(heightDifference) > stepTolerance) {
-                  isObstacleAhead = true;
-                  break;
+
+              // ジャンプ中は段差判定を緩和
+              if (isGrounded) {
+                const heightDifference = intersects[0].point.y - character.position.y;
+                if (Math.abs(heightDifference) > stepTolerance) {
+                    isObstacleAhead = true;
+                    break;
+                }
               }
           }
       }
 
       let isCliffAhead = false;
+      // ジャンプ中は崖判定を無効化
       if (isGrounded) {
            const cliffRayOrigin = new THREE.Vector3(
-              character.position.x + characterDirection.x * 0.4,
+              character.position.x + moveX * 0.4,
               character.position.y + 1.0,
-              character.position.z + characterDirection.z * 0.4
+              character.position.z + moveZ * 0.4
           );
           raycaster.set(cliffRayOrigin, new THREE.Vector3(0, -1, 0));
           const cliffIntersects = raycaster.intersectObjects(collidableObjects, true);
@@ -113,24 +141,64 @@ export function useCharacter() {
           }
       }
 
+      // ジャンプ中は衝突判定を緩和し、移動を優先
       if (!isObstacleAhead && !isCliffAhead) {
           const currentMoveSpeed = isGrounded ? moveSpeed : airMoveSpeed;
           const moveDistance = currentMoveSpeed * delta;
-          const moveVector = new THREE.Vector3(0, 0, moveDistance).applyQuaternion(character.quaternion);
-          const newPosition = character.position.clone().add(moveVector);
-          const finalGroundRayOrigin = newPosition.clone();
-          finalGroundRayOrigin.y += 1.0;
-          raycaster.set(finalGroundRayOrigin, new THREE.Vector3(0, -1, 0));
-          const finalGroundIntersects = raycaster.intersectObjects(collidableObjects, true);
-          let isDestinationOK = false;
-          if (finalGroundIntersects.length > 0) {
-              if (Math.abs(finalGroundIntersects[0].point.y - character.position.y) < stepTolerance) {
-                  isDestinationOK = true;
-              }
+
+          // 同時押しに対応した移動ベクトルの計算
+          const moveVector = new THREE.Vector3(moveX * moveDistance, 0, moveZ * moveDistance);
+
+          // 水平方向の速度を更新
+          xVelocity = moveVector.x;
+          zVelocity = moveVector.z;
+
+          // ジャンプ中は地面との距離チェックを緩和
+          if (isGrounded) {
+            const newPosition = character.position.clone().add(moveVector);
+            const finalGroundRayOrigin = newPosition.clone();
+            finalGroundRayOrigin.y += 1.0;
+            raycaster.set(finalGroundRayOrigin, new THREE.Vector3(0, -1, 0));
+            const finalGroundIntersects = raycaster.intersectObjects(collidableObjects, true);
+            let isDestinationOK = false;
+            if (finalGroundIntersects.length > 0) {
+                if (Math.abs(finalGroundIntersects[0].point.y - character.position.y) < stepTolerance) {
+                    isDestinationOK = true;
+                }
+            }
+            if (isDestinationOK && backgroundBox.containsPoint(newPosition)) {
+                character.position.copy(newPosition);
+            }
+          } else {
+            // 空中では背景ボックスのみチェック
+            const newPosition = character.position.clone().add(moveVector);
+            if (backgroundBox.containsPoint(newPosition)) {
+                character.position.copy(newPosition);
+            }
           }
-          if (isDestinationOK && backgroundBox.containsPoint(newPosition)) {
-              character.position.copy(newPosition);
-          }
+      }
+    }
+
+    // 水平方向の速度を適用（移動キーが押されていない場合でも）
+    if (!isGrounded) {
+      // 空中では空気抵抗を適用
+      xVelocity *= airResistance;
+      zVelocity *= airResistance;
+    } else {
+      // 地面では速度をリセット
+      xVelocity = 0;
+      zVelocity = 0;
+    }
+
+    // 水平方向の移動を適用
+    if (Math.abs(xVelocity) > 0.01 || Math.abs(zVelocity) > 0.01) {
+      const horizontalMoveVector = new THREE.Vector3(xVelocity * delta, 0, zVelocity * delta);
+      const newHorizontalPosition = character.position.clone().add(horizontalMoveVector);
+
+      // 背景ボックス内かチェック
+      if (backgroundBox.containsPoint(newHorizontalPosition)) {
+        character.position.x = newHorizontalPosition.x;
+        character.position.z = newHorizontalPosition.z;
       }
     }
 

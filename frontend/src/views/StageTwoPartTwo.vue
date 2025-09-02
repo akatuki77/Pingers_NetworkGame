@@ -467,8 +467,8 @@ function updatePersistentLabels() {
 function displayQuestion() {
     const currentCastle = castleLocations[currentQuestionIndex];
 
-    questionText.value = `2-1で関所Cに行けば、港町へ辿り着けると分かった。
-    ${currentCastle.location}の住所は何でしょうか。`;
+    questionText.value = `2-1で関所Cに行けば、港町へ辿り着けると分かったね！
+    ${currentCastle.location}の住所は何かな？`;
 
     feedbackText.value = '';
     userAnswer.value = '';
