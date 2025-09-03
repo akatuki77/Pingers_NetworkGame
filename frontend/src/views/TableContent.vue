@@ -58,7 +58,7 @@ import BackButton from '@/components/BackButton.vue';
 const router = useRouter();
 const route = useRoute();
 
-// ★ 変更点: subChaptersにrouteNameプロパティを追加
+// --- 物語データ ---
 const storyContent = {
   '1': {
     title: 'ももたろう',
@@ -68,31 +68,31 @@ const storyContent = {
         number: '第一章',
         name: '刀購入編',
         subChapters: [
-          { id: '1-1', title: '鍛冶の村', summary: 'あらすじ', routeName: 'Stage-1-1' },
+          { id: '1-1', title: '鍛冶の村へ', summary: 'まずは旅の準備だ！鬼を退治するために必要なものを手に入れるため、\n最初の目的地である「鍛冶の村」へ向かおう。', routeName: 'Stage-1-1' },
         ]
       },
       {
         number: '第二章',
-        name: '港町編',
+        name: '港町編 ',
         subChapters: [
-          { id: '2-1', title: 'タイトル', summary: 'あらすじ', routeName: 'Stage-2-1' },
-          { id: '2-2', title: 'タイトル', summary: 'あらすじ', routeName: 'Stage-2-2' },
+          { id: '2-1', title: '国境の門番', summary: '港町へ向かう途中、大きな国境にたどり着いた。\nどの門を進めば良いかわからない。国境の門番に、目的地の港町へ行くための正しい道を教えてもらおう。', routeName: 'Stage-2-1' },
+          { id: '2-2', title: '国境を越えて', summary: '門番に教えてもらった正しい道順を知ることで、迷わずに目的地へたどり着けるはずだ。\n港町を目指そう！', routeName: 'Stage-2-2' },
         ]
       },
       {
         number: '第三章',
-        name: '仲間集め編',
+        name: '仲間集め編 ',
         subChapters: [
-          { id: '3-1', title: 'タイトル', summary: 'あらすじ', routeName: 'Stage-3-1' },
-          { id: '3-2', title: 'タイトル', summary: 'あらすじ', routeName: 'Stage-3-2' },
+          { id: '3-1', title: 'きびだんごを配ろう', summary: '港町にはたくさんの動物がいる。鬼退治に協力してくれる仲間を探すため、\nまずはきびだんごを配って顔と名前を覚えよう。', routeName: 'Stage-3-1' },
+          { id: '3-2', title: '仲間を誘おう', summary: '鬼退治の意志があるのは犬、猿、キジだとわかった。今度はその3匹を名指しで誘いに行き、討伐隊を結成しよう！', routeName: 'Stage-3-2' },
         ]
       },
       {
         number: '第四章',
-        name: '鬼ヶ島編',
+        name: '鬼ヶ島編 ',
         subChapters: [
-          { id: '4-1', title: 'タイトル', summary: 'あらすじ', routeName: 'Stage-4-1' },
-          { id: '4-2', title: 'タイトル', summary: 'あらすじ', routeName: 'Stage-4-2' },
+          { id: '4-1', title: '漁師に道を聞こう', summary: '準備は整ったが、鬼ヶ島への行き方がわからない。\n外の世界への唯一の出口を知っている漁師に、鬼ヶ島まで船を出してくれるようお願いしよう。', routeName: 'Stage-4-1' },
+          { id: '4-2', title: '決戦！鬼ヶ島', summary: 'ついに鬼ヶ島へ到着！仲間たちと協力して鬼を退治しよう。\n戦いの後には、仲間たちが旅の総復習クイズを出してくれるぞ！', routeName: 'Stage-4-2' },
         ]
       },
     ],
@@ -321,6 +321,8 @@ onUnmounted(() => {
   height: 100%;
   padding: 1rem;
   pointer-events: auto;
+  position: relative;
+  bottom: 5em;
 }
 .synopsis-title {
   font-size: 1.8em;
@@ -332,6 +334,7 @@ onUnmounted(() => {
   font-size: 1.1em;
   line-height: 1.7;
   color: #555;
+  white-space: pre-wrap;
 }
 .synopsis-actions {
   display: flex;
