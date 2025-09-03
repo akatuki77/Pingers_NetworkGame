@@ -31,26 +31,35 @@
       </div>
     </div>
 
-    <div id="answer-modal" :class="{ hidden: !isAnswerModalVisible }">
-      <div id="modal-content">
-        <div id="question-modal-text">
-          <template v-if="!isCorrect">
-            <input
-              ref="answerInput"
-              type="text"
-              v-model="userAnswer"
-              placeholder="答えを入力"
-              @keydown.enter="submitAnswer"
-            />
-            <button @click="submitAnswer">回答</button>
-          </template>
-          <button v-if="isCorrect" @click="showExplanation">
-            解説を見る
-          </button>
-          <p id="feedback-text" :style="{ color: feedbackColor }">
-            {{ feedbackText }}
-          </p>
-        </div>
+    <div v-if="isDangoButtonVisible" class="action-button-container">
+      <button @click="startQuiz">問題に挑戦!</button>
+    </div>
+
+    <div id="animal-quiz-modal" class="modal" :class="{ hidden: !isAnimalQuizModalVisible }" v-if="currentQuiz">
+      <div class="modal-content">
+        <p id="feedback-text" :style="{ color: feedbackColor }">
+          {{ feedbackText }}
+        </p>
+        <p id="question-modal-text">
+          {{ questionTextAnimal }}
+          <br><br>
+          {{ questionOptions }}
+        </p>
+        <div v-if="!isCorrect">
+        <input
+          ref="answerInput"
+          type="text"
+          v-model="userAnswer"
+          placeholder="答えの番号を入力"
+          @keydown.enter="submitAnswer"
+          class="large-form-element"
+        />
+        <button @click="submitAnswer" class="large-form-element">回答</button>
+      </div>
+      <button v-if="isCorrect" @click="showExplanation" id="feedback-button">
+        解説を見る
+      </button><br>
+        <button @click="hideAnimalQuizModal">閉じる</button>
       </div>
     </div>
 
@@ -66,10 +75,6 @@
 
     <div id="key-guide">
       <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> 移動  <kbd>Space</kbd> ジャンプ
-    </div>
-
-    <div v-if="isDangoButtonVisible" class="action-button-container">
-      <button @click="giveDango">問題に挑戦する</button>
     </div>
   </div>
 
@@ -97,10 +102,13 @@ const isExplanationModalVisible = ref(false);
 const isCorrect = ref(false);
 const persistentLabels = ref([]); // 常時表示ラベル用の配列
 const isQuestionModalVisible = ref(false);
+const isAnimalQuizModalVisible = ref(false);
 const isDangoButtonVisible = ref(false);
 
 // クイズデータ
 const questionText = ref("");
+const questionTextAnimal = ref("");
+const questionOptions = ref("");
 const userAnswer = ref("");
 const feedbackText = ref("");
 const feedbackColor = ref("black");
@@ -124,11 +132,14 @@ let closestAnimal = null;
 
 // クイズ情報
 const castleLocations = ref([
-    { name: "～についての問題だウキ！", location: "サル", x: -10, z: -2, object: null, hasDango: false, Message: "正解してるウキ！凄いウキ！" },
-    { name: "～についての問題だケーン！", location: "キジ", x: 7.4, z: 7.3, object: null, hasDango: false, Message: "正解してるケーン！凄いケーン！" },
-    { name: "～についての問題だワン！", location: "イヌ", x: -6.9, z: 4.5, object: null, hasDango: false, Message: "正解してるワン！凄いワン！" },
-    { name: "鬼を倒してくれてありがとう！", location: "漁師", x: -1, z: -6.4, object: null, hasDango: false, Message: "漁師：無事鬼を倒してくれてありがとう！" },
+    { name: "IPアドレスについての問題だウキ！", location: "サル", x: -10, z: -2, object: null, hasDango: false, Message: "正解してるウキ！凄いウキ！" },
+    { name: "ルータについての問題だケーン！", location: "キジ", x: 7.4, z: 7.3, object: null, hasDango: false, Message: "正解してるケーン！凄いケーン！" },
+    { name: "スイッチについての問題だワン！", location: "イヌ", x: -6.9, z: 4.5, object: null, hasDango: false, Message: "正解してるワン！凄いワン！" },
 ]);
+
+const fishermanLocations = [
+  { x: -1, z: -6.4, object: null }
+];
 
 const ObjectsLocations = [
     { x: 0, z: -0.2, object: null }, // 港町
@@ -140,38 +151,38 @@ let animationFrameId;
 const reviewQuizzes = ref([
   {
     animal: "イヌ", // どの動物に対応するクイズか
-    question: "イヌ「俺だけに『突撃だ！』って命令をくれた時、他の仲間には聞こえなかったはずだ。それは桃太郎さんがどんな指示の出し方をしたからか、分かるかい？」",
+    question: "イヌ「桃太郎さん！あんたがリーダーになって、俺たち仲間というチーム（ネットワーク）ができた。リーダーであるあんた（スイッチ）の一番大事な仕事は、次のうちどれだったか覚えているかい？」",
     options: [
-      "1.全員に同じ指示を大声で叫んだ", // ハブ
-      "2.指示したい相手を選んでこっそり伝えた", // スイッチ（正解）
-      "3.近くの仲間に伝言を頼んだ", // ルータ
+      "1.誰宛でも、とりあえず全員に同じ指示を伝えること", // ハブ
+      "2.指示を伝えたい相手を正確に覚えて、その仲間にだけ伝えること", // スイッチ（正解）
+      "3.一番遠い場所への行き方を常に考えること", // ルータ
     ],
     correctAnswerIndex: 1, // 正解の選択肢の番号（0から数える）
-    explanation: "正解！スイッチは、接続された仲間の固有アドレス(MACアドレス)を記憶しているので、指示したい相手を正確に選び、その仲間にだけ情報を送ることができるんだ。",
+    explanation: "「正解だワン！あんた（スイッチ）が、きびだんごを渡した時に俺たちの名前（MACアドレス）を覚えてくれたから、無駄のない的確な連携ができるんだ！」",
     isCompleted: false, // このクイズをクリアしたか
   },
   {
     animal: "キジ",
-    question: "キジ「我々が港町から鍛冶の村へ向かうには、正しい関所を経由する必要がありました。たくさんの道がある中で、我々が迷わずに関所を選べたのはなぜでしょうかな？」",
+    question: "キジ：「桃太郎様！鍛冶の村から遠い港町へ向かう時、いくつもの国境の門（ルータ）がありましたね。あの門が果たしていた最も重要な役割について、桃太郎様ならもちろんご存知ですよね？」",
     options: [
-      "1.192.168.10.1", // ルータ（正解）
-      "2.192.168.20.1",
-      "3.192.168.30.1",
+      "1.異なる国（ネットワーク）同士を繋ぎ、最適な次の道へ案内すること", // ルータ（正解）
+      "2.国にある全ての家に手紙を配ること", // ハブ
+      "3.仲間の中から特定の一人を探し出すこと", // スイッチ
     ],
     correctAnswerIndex: 0,
-    explanation: "その通り！ルータ（関所）は、IPアドレスという住所を頼りに、遠いネットワークへ向かうための最適な次の道を判断してくれるんだ。",
+    explanation: "「その通りです！国境の門（ルータ）は、異なるネットワークへの道案内人。あれがなければ、我々は港町にたどり着けませんでしたな。」",
     isCompleted: false,
   },
   {
     animal: "サル",
-    question: "サル「最後はオイラだ！この旅が始まったのは鍛冶屋で刀を手に入れたからだよな。あの村にはたくさんの家があったけど、どうやって鍛冶屋の家を見つけたんだっけ？」",
+    question: "サル「ウキッ、オイラが出す問題に正解できるかな？この旅は、鬼を倒すための準備をしに鍛冶の村に行くところから始まったよな。3つ村から正しい村を見つけられた『決定的な情報』って何だったっけ？」",
     options: [
-      "1.２丁目８番３号",
-      "2.２丁目５番７号",
-      "3.２丁目３ー３５", // IPアドレス（正解）
+      "1.村の住民からのたくさんの『噂話』", // ブロードキャスト情報
+      "2.とにかく進むという『勇気』", // パケットのTTL
+      "3.世界に一つしかない、正確な『住所』", // IPアドレス（正解）
     ],
     correctAnswerIndex: 2,
-    explanation: "お見事！IPアドレスは、ネットワーク上の最終的な目的地を正確に示すための、ただ一つの重要な住所なんだ。",
+    explanation: "「お見事！正確な住所（IPアドレス）があったからこそ、桃太郎の冒険は始まったんだ！忘れるなよ、ウキッ！」",
     isCompleted: false,
   },
 ]);
@@ -189,6 +200,7 @@ onMounted(() => {
   initThree();
   loadModels();
   setupEventListeners();
+  displayQuestion();
   animate();
 });
 
@@ -371,7 +383,7 @@ function loadModels() {
         collidableObjects.push(dog);
 
         // 漁師のモデルを配置
-        const fishermanLocation = castleLocations.value[3];
+        const fishermanLocation = fishermanLocations[0];
         const fisherman = Fisherman.clone();
         fisherman.scale.set(0.6, 0.6, 0.6);
         fishermanLocation.object = fisherman;
@@ -423,23 +435,24 @@ function onWindowResize() {
 }
 
 // きびだんごを渡す関数を再利用
-function giveDango() {
-  if (closestAnimal && !closestAnimal.hasDango) {
-    closestAnimal.hasDango = true; // 状態を「貰った」に更新
+function startQuiz() {
+    if (!closestAnimal) return;
 
+    // 挑戦する動物に対応するクイズを探す
     const quiz = reviewQuizzes.value.find(q => q.animal === closestAnimal.location);
-    if (quiz && !quiz.isCompleted) {
+    if (quiz) {
       currentQuiz.value = quiz;
-      questionText.value = quiz.question; // ★ メインの問題文をセット
+      questionTextAnimal.value = quiz.question;
+      // ★ 選択肢の配列を、改行で区切られた一つの文字列に変換
+      questionOptions.value = quiz.options.join('\n');
 
       // モーダルの状態をリセット
       userAnswer.value = '';
       feedbackText.value = '';
       isCorrect.value = false;
 
-      isAnswerModalVisible.value = true; // ★ 回答モーダルを表示
+      isAnimalQuizModalVisible.value = true; // 回答モーダルを表示
     }
-  }
 }
 
 // アニメーションループ
@@ -455,7 +468,7 @@ function animate() {
       keysPressed: keysPressed.value,
       raycaster,
       collidableObjects,
-      castleLocations,
+      castleLocations: castleLocations.value,
       backgroundBox
     });
 
@@ -496,39 +509,34 @@ function animate() {
     // 最も近い動物が検出範囲内にあるかチェック
     if (closestAnimal && minDistance < detectionRadius) { // 範囲内に動物がいる場合
 
-    // ★ 1. まず、近づいた動物に対応するクイズを`reviewQuizzes`から探す
-    const quiz = reviewQuizzes.value.find(q => q.animal === closestAnimal.location);
+        // ★ 1. まず、近づいた動物に対応するクイズを`reviewQuizzes`から探す
+        const quiz = reviewQuizzes.value.find(q => q.animal === closestAnimal.location);
 
-    // ★ 2. そのクイズが「クリア済み(isCompleted)」かどうかをチェック
-    if (quiz && quiz.isCompleted) {
-        // 【クリア後】Messageのセリフを表示
-        speechBubble.value.text = closestAnimal.Message;
+        // ★ 2. そのクイズが「クリア済み(isCompleted)」かどうかをチェック
+        if (quiz && quiz.isCompleted) {
+            // 【クリア後】Messageのセリフを表示
+            isDangoButtonVisible.value = false;
+            speechBubble.value.text = closestAnimal.Message;
+        } else {
+            // 【クリア前】nameのセリフを表示
+            isDangoButtonVisible.value = true;
+            speechBubble.value.text = closestAnimal.name;
+        }
+
+        speechBubble.value.visible = true;
+        collisionTargetObject = closestAnimal.object;
+
+        updateSpeechBubble();
+
     } else {
-        // 【クリア前】nameのセリフを表示
-        speechBubble.value.text = closestAnimal.name;
-    }
-
-    speechBubble.value.visible = true;
-    collisionTargetObject = closestAnimal.object;
-
-    // きびだんごボタンの表示ロジック（仲間にしていない場合のみ表示）
-    if (closestAnimal.hasDango) {
+        // --- 範囲内に動物がいない場合 ---
+        speechBubble.value.visible = false;
         isDangoButtonVisible.value = false;
-    } else {
-        isDangoButtonVisible.value = true;
-    }
+        collisionTargetObject = null;
+      }
 
-} else {
-    // --- 範囲内に動物がいない場合 ---
-    speechBubble.value.visible = false;
-    isDangoButtonVisible.value = false;
-    collisionTargetObject = null;
-}
-
-    updateSpeechBubble();
     updatePersistentLabels();
   }
-
   controls.update();
   renderer.render(scene, camera);
 }
@@ -570,12 +578,29 @@ function updatePersistentLabels() {
   });
 }
 
+function displayQuestion() {
+    questionText.value = `冒険はこれでおしまい。
+    学んだことの最終確認として、
+    仲間たちの問題に答えよう！`;
+
+    feedbackText.value = '';
+    userAnswer.value = '';
+    isCorrect.value = false;
+
+    isAnimalQuizModalVisible.value = true; // ★ 動物クイズモーダルを表示
+}
+
 function showQuestionModal() {
   isQuestionModalVisible.value = true;
 }
 
 function hideQuestionModal() {
   isQuestionModalVisible.value = false;
+}
+
+// ★ 動物クイズモーダルを閉じる関数
+function hideAnimalQuizModal() {
+    isAnimalQuizModalVisible.value = false;
 }
 
 // 回答の提出
@@ -596,7 +621,7 @@ function submitAnswer() {
   const playerIndex = playerInput - 1;
 
   // ★ 4. 変換したインデックスと、設定した正解のインデックスを比較
-  if (playerIndex.value.trim() === currentQuiz.value.correctAnswerIndex) {
+  if (playerIndex === currentQuiz.value.correctAnswerIndex) {
     feedbackText.value = '正解！';
     feedbackColor.value = 'green';
     isCorrect.value = true; // 「解説を見る」ボタンに切り替え
@@ -626,7 +651,7 @@ function checkAllQuizzesCompleted() {
   const allDone = reviewQuizzes.value.every(q => q.isCompleted);
   if (allDone) {
     isTransitionButtonVisible.value = true;
-    alert("全ての知恵比べに勝利した！");
+    alert("これにて、桃太郎の冒険は終わり。最後まで遊んでくれてありがとう！物語の追加を楽しみにしていてね！");
   }
 }
 </script>
@@ -700,7 +725,8 @@ body {
 
 #answer-modal,
 #explanation-modal,
-#question-modal {
+#question-modal,
+#animal-quiz-modal {
   position: fixed;
   top: 0;
   left: 0;
@@ -719,7 +745,8 @@ body {
 #answer-modal.hidden,
 #speech-bubble.hidden,
 #explanation-modal.hidden,
-#question-modal.hidden {
+#question-modal.hidden,
+#animal-quiz-modal.hidden {
   opacity: 0;
   visibility: hidden;
 }
@@ -737,6 +764,11 @@ body {
   line-height: 1.5; /* 行間を調整 */
   margin-bottom: 25px; /* テキストと閉じるボタンの間隔 */
   max-width: 80vw; /* 横幅が広がりすぎないように */
+  white-space: pre-wrap;
+}
+
+#explanation-modal-text {
+  white-space: pre-wrap;
 }
 
 #modal-content,
@@ -755,9 +787,17 @@ body {
 }
 
 #feedback-text {
-  font-weight: bold;
-  margin-top: 10px;
-  min-height: 1.2em;
+  font-size: 1.8em;       /* 文字サイズを大きくする */
+  font-weight: bold;      /* 文字を太くする */
+  text-align: center;     /* 中央揃えにする */
+  margin-bottom: 15px;    /* 下の問題文との間に余白を空ける */
+  min-height: 1.8em;      /* テキストがなくても高さを確保し、レイアウトのガタつきを防ぐ */
+  transition: color 0.3s; /* 色が変わる時に少しアニメーションさせる */
+}
+
+#feedback-button {
+  font-size: 1.5em;       /* 文字サイズを大きくする */
+  text-align: center;
 }
 
 #key-guide {
@@ -813,5 +853,13 @@ body {
 .action-button-container button:hover {
   background-color: #ff85c1;
   transform: translateY(-2px);
+}
+
+.large-form-element {
+  font-size: 20px; /* 文字を大きく */
+  line-height: 1.5; /* 行間を調整 */
+  margin-bottom: 25px; /* テキストと閉じるボタンの間隔 */
+  max-width: 80vw; /* 横幅が広がりすぎないように */
+  white-space: pre-wrap;
 }
 </style>

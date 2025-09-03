@@ -34,6 +34,9 @@
     <div id="answer-modal" :class="{ hidden: !isAnswerModalVisible }">
       <div id="modal-content">
         <div id="question-modal-text">
+          <p id="feedback-text" :style="{ color: feedbackColor }">
+            {{ feedbackText }}
+          </p>
           <template v-if="!isCorrect">
             <input
               ref="answerInput"
@@ -41,15 +44,13 @@
               v-model="userAnswer"
               placeholder="答えを入力"
               @keydown.enter="submitAnswer"
+              class="large-form-element"
             />
-            <button @click="submitAnswer">回答</button>
+            <button @click="submitAnswer" class="large-form-element">回答</button>
           </template>
-          <button v-if="isCorrect" @click="showExplanation">
+          <button v-if="isCorrect" @click="showExplanation" id="feedback-button">
             解説を見る
           </button>
-          <p id="feedback-text" :style="{ color: feedbackColor }">
-            {{ feedbackText }}
-          </p>
         </div>
       </div>
     </div>
@@ -620,11 +621,11 @@ body {
   line-height: 1.5; /* 行間を調整 */
   margin-bottom: 25px; /* テキストと閉じるボタンの間隔 */
   max-width: 80vw; /* 横幅が広がりすぎないように */
+  white-space: pre-wrap;
 }
 
-#question-modal-text,
-#feedback-text {
-  white-space: pre-wrap; /* 改行を有効にする */
+#explanation-modal-text {
+  white-space: pre-wrap;
 }
 
 #modal-content,
@@ -643,9 +644,17 @@ body {
 }
 
 #feedback-text {
-  font-weight: bold;
-  margin-top: 10px;
-  min-height: 1.2em;
+  font-size: 1.8em;       /* 文字サイズを大きくする */
+  font-weight: bold;      /* 文字を太くする */
+  text-align: center;     /* 中央揃えにする */
+  margin-bottom: 15px;    /* 下の問題文との間に余白を空ける */
+  min-height: 1.8em;      /* テキストがなくても高さを確保し、レイアウトのガタつきを防ぐ */
+  transition: color 0.3s; /* 色が変わる時に少しアニメーションさせる */
+}
+
+#feedback-button {
+  font-size: 1.5em;       /* 文字サイズを大きくする */
+  text-align: center;
 }
 
 #key-guide {
@@ -673,5 +682,13 @@ body {
   font-weight: bold;
   margin: 0 2px;
   font-family: inherit;
+}
+
+.large-form-element {
+  font-size: 20px; /* 文字を大きく */
+  line-height: 1.5; /* 行間を調整 */
+  margin-bottom: 25px; /* テキストと閉じるボタンの間隔 */
+  max-width: 80vw; /* 横幅が広がりすぎないように */
+  white-space: pre-wrap;
 }
 </style>
