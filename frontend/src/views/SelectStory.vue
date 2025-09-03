@@ -36,7 +36,7 @@ const onClick = (event) => {
     // ★★★ ここからデバッグ用コード ★★★
     // console.log("何かヒットしました！");
 
-    // const clickedObject = intersects[0].object;
+    const clickedObject = intersects[0].object;
     // console.log("直接クリックされたオブジェクト:", clickedObject);
     // console.log("そのオブジェクトのuserData:", clickedObject.userData);
     // console.log("そのオブジェクトの親:", clickedObject.parent);

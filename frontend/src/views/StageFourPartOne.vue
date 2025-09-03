@@ -35,8 +35,16 @@
       <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> 移動
     </div>
 
+    <div v-if="oniImageIsVisible" class="oni-image-container" @click.self="hideOniImage">
+      <img :src="oniDefeatedImage" alt="鬼を倒した画像">
+    </div>
+
     <div v-if="isTransitionButtonVisible" class="transition-button-container">
       <button @click="oniPicture">鬼退治へ行く</button>
+    </div>
+
+    <div v-if="isStage42ButtonVisible" class="transition-button-container">
+      <button @click="goToStageFourPartTwo">4-2へ進む</button>
     </div>
   </div>
 
@@ -53,6 +61,8 @@ import BackButton from "@/components/BackButton.vue";
 import { useCharacterKeymap } from "@/composable/useCharacterKeymap.js";
 import { useCharacter } from "@/composable/useboat.js";
 import { useKeyboard } from "@/composable/useKeyboard.js";
+import { useRouter } from 'vue-router';
+import oniDefeatedImage from "@/assets/image/gorira.png";
 
 // === Vue リアクティブな状態管理 ===
 const canvasContainer = ref(null);
@@ -65,6 +75,7 @@ const isExplanationModalVisible = ref(false);
 const isCorrect = ref(false);
 const persistentLabels = ref([]); // 常時表示ラベル用の配列
 const isQuestionModalVisible = ref(false);
+const oniImageIsVisible = ref(false); // 鬼を倒した画像の表示
 
 // クイズデータ
 const questionText = ref("");
@@ -85,15 +96,20 @@ useCharacterKeymap(characterHook, keysPressed);
 // 衝突したオブジェクトを保持
 let collisionTargetObject = null;
 
+const router = useRouter(); // routerインスタンスを取得
+
 // 1. ボタンの表示・非表示を管理するリアクティブな変数
 const isTransitionButtonVisible = ref(false);
+const isStage42ButtonVisible = ref(false);
+const oniDefeated = ref(false);
 
 // 2. ボタンを表示させたい目標地点の座標を設定
 // ★ XとZの値を、あなたの設定したい座標に書き換えてください
 const triggerPosition = new THREE.Vector3(0, 0, -3);
+const stage42TriggerPosition = new THREE.Vector3(0, 0, 11.7);
 
 const ObjectsLocations = [
-  { x: 0, z: 0.2, object: null }, // 鬼ヶ島
+  { x: 0.2, z: 3, object: null }, // 鬼ヶ島
   { x: 0, z: 25.6, object: null }, // 港町
 
 ];
@@ -222,7 +238,7 @@ function loadModels() {
         raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
         intersects = raycaster.intersectObject(background, true);
         groundY = intersects.length > 0 ? intersects[0].point.y : 0;
-        oniObject.position.set(OniLocation.x, groundY - 0.09, OniLocation.z);
+        oniObject.position.set(OniLocation.x, groundY - 0.1, OniLocation.z);
         scene.add(oniObject);
 
         // 港町オブジェクトのモデルを配置
@@ -309,15 +325,27 @@ function animate() {
     const characterPosition = characterHook.character.position;
 
     // キャラクターと目標地点との距離を計算
-    const distance = characterPosition.distanceTo(triggerPosition);
+    const oniDistance = characterPosition.distanceTo(triggerPosition);
 
     // 距離が設定した半径(detectionRadius)より小さいかどうかを判定
-    if (distance < detectionRadius) {
+    if (oniDistance < detectionRadius && !oniDefeated.value) {
       // 半径の内側に入ったらボタンを表示
       isTransitionButtonVisible.value = true;
     } else {
       // 半径の外に出たらボタンを非表示
       isTransitionButtonVisible.value = false;
+    }
+
+    const stage42Distance = characterPosition.distanceTo(stage42TriggerPosition);
+    if (oniDefeated.value) {
+      // 距離が設定した半径(detectionRadius)より小さいかどうかを判定
+      if (stage42Distance < detectionRadius) {
+        // 半径の内側に入ったらボタンを表示
+        isStage42ButtonVisible.value = true;
+      } else {
+        // 半径の外に出たらボタンを非表示
+        isStage42ButtonVisible.value = false;
+      }
     }
 
     updateSpeechBubble();
@@ -380,6 +408,26 @@ function showQuestionModal() {
 
 function hideQuestionModal() {
   isQuestionModalVisible.value = false;
+}
+
+function oniPicture() {
+  // 鬼を倒した画像を表示する
+  oniImageIsVisible.value = true;
+
+  // 「鬼退治へ行く」ボタンを非表示にする
+  isTransitionButtonVisible.value = false;
+
+  // ★ 「鬼退治ボタンが押された」という事実を記憶する
+  oniDefeated.value = true;
+}
+
+function hideOniImage() {
+  oniImageIsVisible.value = false;
+}
+
+function goToStageFourPartTwo() {
+  // '/stage-4-2' の部分は、実際のルート設定に合わせて変更してください
+  router.push('/Stage-4-2');
 }
 </script>
 
@@ -514,6 +562,36 @@ body {
   font-weight: bold;
   margin-top: 10px;
   min-height: 1.2em;
+}
+
+.oni-image-container {
+  /* 画面全体に広がるコンテナにする */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  /* 中の画像を中央に配置するための設定 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  /* 背景を少し暗くして画像を際立たせる */
+  background-color: rgba(0, 0, 0, 0.5);
+
+  /* ★★★ 最も重要 ★★★ */
+  /* 他のどの要素よりも手前に表示する (モーダルやボタンより大きい値に) */
+  z-index: 200;
+}
+
+/* 画像自体のサイズを調整 */
+.oni-image-container img {
+  max-width: 80%;   /* 画面幅の80%を最大幅にする */
+  max-height: 80%;  /* 画面高さの80%を最大高さにする */
+  /* border: 3px solid white;
+  border-radius: 10px;
+  box-shadow: 0 0 30px rgba(0,0,0,0.5); */
 }
 
 #key-guide {

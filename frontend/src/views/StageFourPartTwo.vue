@@ -324,7 +324,7 @@ function loadModels() {
         raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
         intersects = raycaster.intersectObject(background, true);
         groundY = intersects.length > 0 ? intersects[0].point.y : 0;
-        object.position.set(PortLocation.x, groundY - 1.15, PortLocation.z);
+        object.position.set(PortLocation.x, groundY - 0.1, PortLocation.z);
         scene.add(object);
         collidableObjects.push(object);
 
