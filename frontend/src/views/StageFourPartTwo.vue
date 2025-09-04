@@ -626,6 +626,8 @@ function submitAnswer() {
     feedbackColor.value = 'green';
     isCorrect.value = true; // 「解説を見る」ボタンに切り替え
     currentQuiz.value.isCompleted = true; // クリア済みにする
+
+    checkAllQuizzesCompleted(); // 全クイズクリアチェック
   } else {
     feedbackText.value = '不正解…もう一度考えてみよう！';
     feedbackColor.value = 'red';
@@ -643,7 +645,6 @@ function showExplanation() {
 // 解説モーダルの閉じるボタン
 function closeExplanation() {
     isExplanationModalVisible.value = false;
-    checkAllQuizzesCompleted(); // ★ 全問クリアしたかチェック
 }
 
 // 全てのクイズがクリアされたかチェックする関数
