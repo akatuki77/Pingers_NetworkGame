@@ -133,7 +133,7 @@ const castleLocations = [
 
 const ObjectsLocations = [
     { x: 0, z: -0.2, object: null }, // 港町
-    { x: 0.35, z: -25.6, object: null }  // 鬼ヶ島
+    { x: 0.35, z: -22.51, object: null }  // 鬼ヶ島
 ];
 
 // const quiz = [
