@@ -37,6 +37,11 @@
           <p id="feedback-text" :style="{ color: feedbackColor }">
             {{ feedbackText }}
           </p>
+          <!-- <p id="question-modal-text">
+            {{ questionText }}
+            <br><br>
+            {{ questionOptions }}
+          </p> -->
           <template v-if="!isCorrect">
             <input
               ref="answerInput"
@@ -130,6 +135,16 @@ const ObjectsLocations = [
     { x: 0, z: -0.2, object: null }, // 港町
     { x: 0.35, z: -25.6, object: null }  // 鬼ヶ島
 ];
+
+// const quiz = [
+//   {
+//     question: [
+//       "1.全員に聞こえるように、同じ指示を大声で叫ぶ",
+//       "2.指示を伝えたい相手を正確に選び、その仲間にだけこっそり伝える",
+//       "3.とりあえず一番近くにいる仲間に伝言を頼む"
+//     ]
+//   }
+// ];
 let animationFrameId;
 
 const router = useRouter(); // routerインスタンスを取得
