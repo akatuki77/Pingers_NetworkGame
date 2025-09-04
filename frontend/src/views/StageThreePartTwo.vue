@@ -66,7 +66,7 @@
           <h2>クリア！</h2>
           <p id="explanation-text">{{ explanationText }}</p>
         </div>
-        <button @click="closeExplanation">閉じる</button>
+        <button @click="closeExplanation">一覧に戻る</button>
       </div>
     </div>
 
@@ -656,14 +656,15 @@ body {
   white-space: pre-wrap; /* 改行を有効にする */
 }
 
-#modal-content,
-.modal-content {
-  background: white;
-  padding: 30px;
-  border-radius: 8px;
-  text-align: center;
-  transform: translateY(0);
-  transition: transform 0.7s ease;
+#modal-content button,
+.modal-content button,
+#modal-content input,
+.modal-content input {
+  margin: 5px;
+  font-size: 22px;
+  padding: 8px 16px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
 }
 
 .modal-content button,

@@ -238,7 +238,7 @@ function loadModels() {
         raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
         intersects = raycaster.intersectObject(background, true);
         groundY = intersects.length > 0 ? intersects[0].point.y : 0;
-        oniObject.position.set(OniLocation.x, groundY - 0.1, OniLocation.z);
+        oniObject.position.set(OniLocation.x, groundY - 0.14, OniLocation.z);
         scene.add(oniObject);
 
         // 港町オブジェクトのモデルを配置
@@ -553,9 +553,15 @@ body {
   transition: transform 0.7s ease;
 }
 
+#modal-content button,
 .modal-content button,
+#modal-content input,
 .modal-content input {
   margin: 5px;
+  font-size: 22px;
+  padding: 8px 16px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
 }
 
 #feedback-text {
