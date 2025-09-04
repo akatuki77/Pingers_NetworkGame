@@ -214,8 +214,8 @@ export function useCharacter() {
       loader.load('/models/character/momotaro.glb', (gltf) => {
           character = gltf.scene;
           character.scale.set(0.6, 0.6, 0.6);
-          character.position.set(0.2, 2.4, 12.1);
-          character.rotation.y = Math.PI;
+          character.position.set(4, 2.4, -9);
+          character.rotation.y = 0;
           character.traverse(child => {
               if (child.isMesh) child.castShadow = true;
           });

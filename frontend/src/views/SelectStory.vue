@@ -34,13 +34,13 @@ const onClick = (event) => {
 
   if (intersects.length > 0) {
     // ★★★ ここからデバッグ用コード ★★★
-    console.log("何かヒットしました！");
+    // console.log("何かヒットしました！");
 
     const clickedObject = intersects[0].object;
-    console.log("直接クリックされたオブジェクト:", clickedObject);
-    console.log("そのオブジェクトのuserData:", clickedObject.userData);
-    console.log("そのオブジェクトの親:", clickedObject.parent);
-    console.log("親のuserData:", clickedObject.parent ? clickedObject.parent.userData : "親がいません");
+    // console.log("直接クリックされたオブジェクト:", clickedObject);
+    // console.log("そのオブジェクトのuserData:", clickedObject.userData);
+    // console.log("そのオブジェクトの親:", clickedObject.parent);
+    // console.log("親のuserData:", clickedObject.parent ? clickedObject.parent.userData : "親がいません");
     // ★★★ ここまでデバッグ用コード ★★★
 
     // 元のページ移動ロジック

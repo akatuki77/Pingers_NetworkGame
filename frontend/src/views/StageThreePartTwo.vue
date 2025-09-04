@@ -34,6 +34,14 @@
     <div id="answer-modal" :class="{ hidden: !isAnswerModalVisible }">
       <div id="modal-content">
         <div id="question-modal-text">
+          <p id="feedback-text" :style="{ color: feedbackColor }">
+            {{ feedbackText }}
+          </p>
+          <!-- <p id="question-modal-text">
+            {{ questionText }}
+            <br><br>
+            {{ questionOptions }}
+          </p> -->
           <template v-if="!isCorrect">
             <input
               ref="answerInput"
@@ -41,15 +49,13 @@
               v-model="userAnswer"
               placeholder="答えを入力"
               @keydown.enter="submitAnswer"
+              class="large-form-element"
             />
-            <button @click="submitAnswer">回答</button>
+            <button @click="submitAnswer" class="large-form-element">回答</button>
           </template>
-          <button v-if="isCorrect" @click="showExplanation">
+          <button v-if="isCorrect" @click="showExplanation" id="feedback-button">
             解説を見る
           </button>
-          <p id="feedback-text" :style="{ color: feedbackColor }">
-            {{ feedbackText }}
-          </p>
         </div>
       </div>
     </div>
@@ -129,6 +135,16 @@ const ObjectsLocations = [
     { x: 0, z: -0.2, object: null }, // 港町
     { x: 0.35, z: -25.6, object: null }  // 鬼ヶ島
 ];
+
+// const quiz = [
+//   {
+//     question: [
+//       "1.全員に聞こえるように、同じ指示を大声で叫ぶ",
+//       "2.指示を伝えたい相手を正確に選び、その仲間にだけこっそり伝える",
+//       "3.とりあえず一番近くにいる仲間に伝言を頼む"
+//     ]
+//   }
+// ];
 let animationFrameId;
 
 const router = useRouter(); // routerインスタンスを取得
@@ -478,7 +494,7 @@ function updatePersistentLabels() {
 
 // === UI ロジック ===
 function displayQuestion() {
-    questionText.value = `鬼ヶ島まで行くには、船が必要だ！船場にいる漁師の問題に回答して船を貸してもらおう！
+    questionText.value = `鬼ヶ島まで行くには、船が必要だよ！船場にいる漁師の問題に正解すると船を貸してもらえるみたい！
 1.全員に聞こえるように、同じ指示を大声で叫ぶ
 2.指示を伝えたい相手を正確に選び、その仲間にだけこっそり伝える
 3.とりあえず一番近くにいる仲間に伝言を頼む`;
@@ -656,9 +672,17 @@ body {
 }
 
 #feedback-text {
-  font-weight: bold;
-  margin-top: 10px;
-  min-height: 1.2em;
+  font-size: 1.8em;       /* 文字サイズを大きくする */
+  font-weight: bold;      /* 文字を太くする */
+  text-align: center;     /* 中央揃えにする */
+  margin-bottom: 15px;    /* 下の問題文との間に余白を空ける */
+  min-height: 1.8em;      /* テキストがなくても高さを確保し、レイアウトのガタつきを防ぐ */
+  transition: color 0.3s; /* 色が変わる時に少しアニメーションさせる */
+}
+
+#feedback-button {
+  font-size: 1.5em;       /* 文字サイズを大きくする */
+  text-align: center;
 }
 
 #key-guide {
@@ -686,5 +710,13 @@ body {
   font-weight: bold;
   margin: 0 2px;
   font-family: inherit;
+}
+
+.large-form-element {
+  font-size: 20px; /* 文字を大きく */
+  line-height: 1.5; /* 行間を調整 */
+  margin-bottom: 25px; /* テキストと閉じるボタンの間隔 */
+  max-width: 80vw; /* 横幅が広がりすぎないように */
+  white-space: pre-wrap;
 }
 </style>
