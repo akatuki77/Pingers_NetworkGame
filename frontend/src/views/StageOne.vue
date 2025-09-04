@@ -144,9 +144,9 @@ let collisionTargetObject = null;
 // クイズ情報
 let currentQuestionIndex = 1;
 const castleLocations = [
-  { name: "2丁目6-11", location: "花の村", x: -0.7, z: -7.5, object: null },
-  { name: "2丁目3-35", location: "鍛冶の村", x: 8, z: -6, object: null },
-  { name: "2丁目1-6", location: "商人の村", x: -9.5, z: -6.5, object: null }
+  { name: "住所；2-6-11", location: "花の村", x: -0.7, z: -7.5, object: null },
+  { name: "住所；2-3-35", location: "鍛冶の村", x: 8, z: -6, object: null },
+  { name: "住所；2-1-6", location: "商人の村", x: -9.5, z: -6.5, object: null }
 ];
 let animationFrameId;
 
@@ -154,6 +154,7 @@ const router = useRouter();
 
 // === 初期化処理 ===
 onMounted(() => {
+  showQuestionModal();
   initThree();
   loadModels();
   setupEventListeners();
@@ -445,7 +446,7 @@ function submitAnswer() {
         feedbackColor.value = 'green';
         isCorrect.value = true;
     } else {
-        feedbackText.value = '不正解×';
+        feedbackText.value = '不正解…もう一度考えてみよう！';
         feedbackColor.value = 'red';
     }
 }

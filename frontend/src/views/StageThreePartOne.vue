@@ -111,6 +111,7 @@ const characterBox = new THREE.Box3();
 
 // === 初期化処理 ===
 onMounted(() => {
+  showQuestionModal();
   initThree();
   loadModels();
   setupEventListeners();
