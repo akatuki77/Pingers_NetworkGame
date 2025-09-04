@@ -143,7 +143,7 @@ const fishermanLocations = [
 
 const ObjectsLocations = [
     { x: 0, z: -0.2, object: null }, // 港町
-    { x: 0.35, z: -25.6, object: null }  // 鬼ヶ島
+    { x: 0.35, z: -22.6, object: null }  // 鬼ヶ島
 ];
 let animationFrameId;
 
@@ -324,7 +324,7 @@ function loadModels() {
         raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
         intersects = raycaster.intersectObject(background, true);
         groundY = intersects.length > 0 ? intersects[0].point.y : 0;
-        object.position.set(PortLocation.x, groundY - 0.1, PortLocation.z);
+        object.position.set(PortLocation.x, groundY - 1.15, PortLocation.z);
         scene.add(object);
         collidableObjects.push(object);
 

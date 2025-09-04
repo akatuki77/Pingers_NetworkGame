@@ -553,9 +553,15 @@ body {
   transition: transform 0.7s ease;
 }
 
+#modal-content button,
 .modal-content button,
+#modal-content input,
 .modal-content input {
   margin: 5px;
+  font-size: 22px;
+  padding: 8px 16px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
 }
 
 #feedback-text {
