@@ -143,7 +143,7 @@ const fishermanLocations = [
 
 const ObjectsLocations = [
     { x: 0, z: -0.2, object: null }, // 港町
-    { x: 0.35, z: -22.6, object: null }  // 鬼ヶ島
+    { x: 0.35, z: -22.51, object: null }  // 鬼ヶ島
 ];
 let animationFrameId;
 
@@ -197,6 +197,7 @@ const characterBox = new THREE.Box3();
 
 // === 初期化処理 ===
 onMounted(() => {
+  showQuestionModal();
   initThree();
   loadModels();
   setupEventListeners();
@@ -622,7 +623,7 @@ function submitAnswer() {
 
   // ★ 4. 変換したインデックスと、設定した正解のインデックスを比較
   if (playerIndex === currentQuiz.value.correctAnswerIndex) {
-    feedbackText.value = '正解！';
+    feedbackText.value = '正解◎';
     feedbackColor.value = 'green';
     isCorrect.value = true; // 「解説を見る」ボタンに切り替え
     currentQuiz.value.isCompleted = true; // クリア済みにする

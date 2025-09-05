@@ -36,7 +36,9 @@
     </div>
 
     <div v-if="oniImageIsVisible" class="oni-image-container" @click.self="hideOniImage">
+      <p id="question-modal-text">鬼を退治した！港町まで戻ろう！</p><br>
       <img :src="oniDefeatedImage" alt="鬼を倒した画像">
+      <img :src="momoDefeatedImage" alt="桃太郎が倒した画像">
     </div>
 
     <div v-if="isTransitionButtonVisible" class="transition-button-container">
@@ -62,7 +64,8 @@ import { useCharacterKeymap } from "@/composable/useCharacterKeymap.js";
 import { useCharacter } from "@/composable/useboat.js";
 import { useKeyboard } from "@/composable/useKeyboard.js";
 import { useRouter } from 'vue-router';
-import oniDefeatedImage from "@/assets/image/gorira.png";
+import oniDefeatedImage from "@/assets/image/oni_taiji.png";
+import momoDefeatedImage from "@/assets/image/momo_taiji.png";
 
 // === Vue リアクティブな状態管理 ===
 const canvasContainer = ref(null);
@@ -117,6 +120,7 @@ let animationFrameId;
 
 // === 初期化処理 ===
 onMounted(() => {
+  showQuestionModal();
   initThree();
   loadModels();
   setupEventListeners();

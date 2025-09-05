@@ -154,6 +154,7 @@ const router = useRouter();
 
 // === 初期化処理 ===
 onMounted(() => {
+  showQuestionModal();
   initThree();
   loadModels();
   setupEventListeners();
@@ -445,7 +446,7 @@ function submitAnswer() {
         feedbackColor.value = 'green';
         isCorrect.value = true;
     } else {
-        feedbackText.value = '不正解×';
+        feedbackText.value = '不正解…もう一度考えてみよう！';
         feedbackColor.value = 'red';
     }
 }

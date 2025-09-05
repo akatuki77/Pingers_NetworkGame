@@ -37,11 +37,11 @@
           <p id="feedback-text" :style="{ color: feedbackColor }">
             {{ feedbackText }}
           </p>
-          <!-- <p id="question-modal-text">
-            {{ questionText }}
+          <p id="question-modal-text">
+            {{ Text }}
             <br><br>
             {{ questionOptions }}
-          </p> -->
+          </p>
           <template v-if="!isCorrect">
             <input
               ref="answerInput"
@@ -104,6 +104,8 @@ const isQuestionModalVisible = ref(false);
 
 // クイズデータ
 const questionText = ref("");
+const Text = ref("");
+const questionOptions = ref("");
 const userAnswer = ref("");
 const feedbackText = ref("");
 const feedbackColor = ref("black");
@@ -128,29 +130,40 @@ const castleLocations = [
     { name: "オイラ、桃太郎さんについていくウキ！", location: "サル", x: -11.2, z: -2, object: null },
     { name: "鬼ヶ島までお供するケーン！", location: "キジ", x: 2.5, z: 7, object: null },
     { name: "鬼退治、ぜひ手伝わせてほしいワン！", location: "イヌ", x: -6.9, z: 4.5, object: null },
-    { name: "リーダーとしての最も賢い指示の出し方は3つのうちどれだと思う？", location: "漁師", x: -1, z: -6.4, object: null },
+    { name: "Enterを押すと、問題文と選択肢が表示されるぜ！", location: "漁師", x: -1, z: -6.4, object: null },
 ];
 
 const ObjectsLocations = [
     { x: 0, z: -0.2, object: null }, // 港町
-    { x: 0.35, z: -25.6, object: null }  // 鬼ヶ島
+    { x: 0.35, z: -22.51, object: null }  // 鬼ヶ島
 ];
 
-// const quiz = [
-//   {
-//     question: [
-//       "1.全員に聞こえるように、同じ指示を大声で叫ぶ",
-//       "2.指示を伝えたい相手を正確に選び、その仲間にだけこっそり伝える",
-//       "3.とりあえず一番近くにいる仲間に伝言を頼む"
-//     ]
-//   }
-// ];
+const quiz = ref([
+  {
+    correctAnswerIndex: 1, // 正解は2番目の選択肢（インデックス1）
+    question: "リーダーとしての最も賢い指示の出し方は3つのうちどれだと思う？",
+    options: [
+      "1.全員に聞こえるように、同じ指示を大声で叫ぶ",
+      "2.指示を伝えたい相手を正確に選び、その仲間にだけこっそり伝える",
+      "3.とりあえず一番近くにいる仲間に伝言を頼む"
+    ]
+  }
+]);
 let animationFrameId;
 
 const router = useRouter(); // routerインスタンスを取得
 
 // === 初期化処理 ===
 onMounted(() => {
+  // ★ quiz配列から最初の問題を取り出す
+  const currentQuizData = quiz.value[0];
+
+  // ★ 問題文をセットする
+  Text.value = currentQuizData.question;
+
+  // ★ 選択肢の配列を、改行(\n)で区切った一つの文字列に変換してセットする
+  questionOptions.value = currentQuizData.options.join('\n');
+  showQuestionModal();
   initThree();
   loadModels();
   setupEventListeners();
@@ -494,10 +507,9 @@ function updatePersistentLabels() {
 
 // === UI ロジック ===
 function displayQuestion() {
-    questionText.value = `鬼ヶ島まで行くには、船が必要だよ！船場にいる漁師の問題に正解すると船を貸してもらえるみたい！
-1.全員に聞こえるように、同じ指示を大声で叫ぶ
-2.指示を伝えたい相手を正確に選び、その仲間にだけこっそり伝える
-3.とりあえず一番近くにいる仲間に伝言を頼む`;
+    questionText.value = `鬼ヶ島まで行くには、海を渡る必要があるよ！
+    船場にいる漁師が出している問題に正解すると
+    船を貸してもらえるみたいだよ！`;
     feedbackText.value = '';
     userAnswer.value = '';
     isCorrect.value = false;
@@ -513,16 +525,28 @@ function hideQuestionModal() {
 
 // 回答の提出
 function submitAnswer() {
-    if (!userAnswer.value) return;
-    // const correctAnswer = currentQuestionIndex;
-    if (userAnswer.value.trim() === '2') {
-        feedbackText.value = '正解◎';
-        feedbackColor.value = 'green';
-        isCorrect.value = true;
-    } else {
-        feedbackText.value = '不正解×';
-        feedbackColor.value = 'red';
-    }
+    const currentQuizData = quiz.value[0];
+  if (!currentQuizData || !userAnswer.value) return;
+
+  const playerInput = parseInt(userAnswer.value.trim());
+
+  if (isNaN(playerInput)) {
+    feedbackText.value = '数字で答えてね！';
+    feedbackColor.value = 'red';
+    return;
+  }
+
+  const playerIndex = playerInput - 1;
+
+  // ★ currentQuizData を使って正解のインデックスを比較
+  if (playerIndex === currentQuizData.correctAnswerIndex) {
+    feedbackText.value = '正解◎';
+    feedbackColor.value = 'green';
+    isCorrect.value = true;
+  } else {
+    feedbackText.value = '不正解…もう一度考えてみよう！';
+    feedbackColor.value = 'red';
+  }
 }
 
 // 解説モーダルの表示
@@ -654,6 +678,16 @@ body {
 #question-modal-text,
 #feedback-text {
   white-space: pre-wrap; /* 改行を有効にする */
+}
+
+#modal-content,
+.modal-content {
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  text-align: center;
+  transform: translateY(0);
+  transition: transform 0.7s ease;
 }
 
 #modal-content button,
