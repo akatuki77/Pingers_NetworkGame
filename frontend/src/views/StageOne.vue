@@ -144,9 +144,9 @@ let collisionTargetObject = null;
 // クイズ情報
 let currentQuestionIndex = 1;
 const castleLocations = [
-  { name: "住所；2-6-11", location: "花の村", x: -0.7, z: -7.5, object: null },
-  { name: "住所；2-3-35", location: "鍛冶の村", x: 8, z: -6, object: null },
-  { name: "住所；2-1-6", location: "商人の村", x: -9.5, z: -6.5, object: null }
+  { name: "2-6-11", location: "花の村", x: -0.7, z: -7.5, object: null },
+  { name: "2-3-35", location: "鍛冶の村", x: 8, z: -6, object: null },
+  { name: "2-1-6", location: "商人の村", x: -9.5, z: -6.5, object: null }
 ];
 let animationFrameId;
 
