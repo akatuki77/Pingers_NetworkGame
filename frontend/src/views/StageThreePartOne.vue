@@ -48,7 +48,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, watch } from "vue";
 import * as THREE from "three";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
@@ -354,6 +354,14 @@ function giveDango() {
     checkAllAlliesGathered();
   }
 }
+
+watch(() => keysPressed.value['enter'], (isPressed) => {
+  if (isPressed && isDangoButtonVisible.value) {
+    giveDango(); // きびだんごを渡す関数を呼び出す
+  } else if (isPressed && isTransitionButtonVisible.value) {
+      goToStageThreePartTwo(); // 画面遷移する関数を呼び出す
+    }
+});
 
 // アニメーションループ
 function animate() {

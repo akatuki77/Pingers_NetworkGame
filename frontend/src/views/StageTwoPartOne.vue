@@ -44,7 +44,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, watch } from "vue";
 import * as THREE from "three";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
@@ -86,7 +86,7 @@ let collisionTargetObject = null;
 
 // クイズ情報
 const castleLocations = [
-    { name: "関所Cに行けば、港町へ辿り着けるであろう。", location: "関所Aの門番", x: 3, z: -6, object: null },
+    { name: "関所Aを通り抜けて、関所Cに行けば、港町へ辿り着けるであろう。", location: "関所Aの門番", x: 3, z: -6, object: null },
 ];
 let animationFrameId;
 
@@ -288,6 +288,13 @@ function onWindowResize() {
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
+
+watch(() => keysPressed.value['enter'], (isPressed) => {
+  // ★ ボタンが表示されている（＝遷移ゾーンにいる）時だけ、キーを有効にする
+  if (isPressed && isTransitionButtonVisible.value) {
+    goToStageTwoPartTwo(); // 画面遷移する関数を呼び出す
+  }
+});
 
 // アニメーションループ
 function animate() {

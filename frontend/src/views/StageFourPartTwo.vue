@@ -82,7 +82,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, watch } from "vue";
 import * as THREE from "three";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
@@ -455,6 +455,26 @@ function startQuiz() {
       isAnimalQuizModalVisible.value = true; // 回答モーダルを表示
     }
 }
+
+watch(() => keysPressed.value['enter'], (isPressed) => {
+  // ★ ボタンが表示されている（＝遷移ゾーンにいる）時だけ、キーを有効にする
+  if (isPressed && isDangoButtonVisible.value) {
+      startQuiz();
+  }
+});
+
+// Escapeキーでモーダルを閉じる
+watch(() => keysPressed.value['escape'], (isPressed) => {
+  if (isPressed) {
+    if (isAnimalQuizModalVisible.value) {
+      hideAnimalQuizModal();
+    } else if (isExplanationModalVisible.value) {
+      closeExplanation();
+    } else if (isQuestionModalVisible.value) {
+      hideQuestionModal();
+    }
+  }
+});
 
 // アニメーションループ
 function animate() {

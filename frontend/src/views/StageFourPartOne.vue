@@ -32,20 +32,22 @@
     </div>
 
     <div id="key-guide">
-      <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> 移動
+      <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> 移動  <kbd>Enter</kbd> 決定  <kbd>Esc</kbd> 閉じる
     </div>
 
-    <div v-if="oniImageIsVisible" class="oni-image-container" @click.self="hideOniImage">
-      <p id="question-modal-text">鬼を退治した！港町まで戻ろう！</p><br>
-      <img :src="oniDefeatedImage" alt="鬼を倒した画像">
-      <img :src="momoDefeatedImage" alt="桃太郎が倒した画像">
+    <div class="oni-image-container" :class="{ hidden: !oniImageIsVisible }" @click.self="hideOniImage">
+      <div class="image-content-box">
+        <p id="question-modal-text">鬼を退治した！港町まで戻ろう！</p><br>
+        <img :src="oniDefeatedImage" alt="鬼を倒した画像">
+        <img :src="momoDefeatedImage" alt="桃太郎が倒した画像">
+      </div>
     </div>
 
     <div v-if="isTransitionButtonVisible" class="transition-button-container">
       <button @click="oniPicture">鬼退治へ行く</button>
     </div>
 
-    <div v-if="isStage42ButtonVisible" class="transition-button-container">
+    <div v-if="isStage42ButtonVisible" class="transition-button-container2">
       <button @click="goToStageFourPartTwo">4-2へ進む</button>
     </div>
   </div>
@@ -287,21 +289,26 @@ function onWindowResize() {
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-// Enterキーで回答モーダルを開く
 watch(() => keysPressed.value['enter'], (isPressed) => {
-  if (isPressed && !isAnswerModalVisible.value) { // モーダルが既に開いていなければ
-    isAnswerModalVisible.value = true;
-    nextTick(() => {
-      if(answerInput.value) answerInput.value.focus();
-    });
+  // ★ ボタンが表示されている（＝遷移ゾーンにいる）時だけ、キーを有効にする
+  if (isPressed && isTransitionButtonVisible.value) {
+    oniPicture(); // 鬼退治へ行く関数を呼び出す
+  }
+
+  if (isPressed && isStage42ButtonVisible.value) {
+    goToStageFourPartTwo(); // 画面遷移する関数を呼び出す
   }
 });
 
 // Escapeキーでモーダルを閉じる
 watch(() => keysPressed.value['escape'], (isPressed) => {
   if (isPressed) {
-    isAnswerModalVisible.value = false;
-    isExplanationModalVisible.value = false;
+    if (isQuestionModalVisible.value) {
+      hideQuestionModal();
+    }
+    if (oniImageIsVisible.value) {
+      hideOniImage();
+    }
   }
 });
 
@@ -575,33 +582,45 @@ body {
 }
 
 .oni-image-container {
-  /* 画面全体に広がるコンテナにする */
-  position: absolute;
+  position: fixed; /* absoluteからfixedに変更すると、より確実です */
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-
-  /* 中の画像を中央に配置するための設定 */
   display: flex;
   justify-content: center;
   align-items: center;
+  background-color: rgba(0, 0, 0, 0.6); /* ★ 半透明の黒に変更 */
+  z-index: 200; 
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.7s ease, visibility 0.7s ease;
+}
 
-  /* 背景を少し暗くして画像を際立たせる */
-  background-color: rgba(0, 0, 0, 0.5);
+.oni-image-container.hidden {
+  /* ★ 開始状態（見えない） */
+  opacity: 0;
+  transform: translateY(0);
+  /* ★ クリックなどを邪魔しないように */
+  pointer-events: none; 
+}
 
-  /* ★★★ 最も重要 ★★★ */
-  /* 他のどの要素よりも手前に表示する (モーダルやボタンより大きい値に) */
-  z-index: 200;
+/* こちらが「画像と、その周りの白い枠」の役割 */
+.image-content-box {
+  background: white;
+  padding: 20px; /* ★ 白い枠の余白を調整 */
+  border-radius: 8px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+  /* 中の画像がはみ出さないように */
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* 画像自体のサイズを調整 */
 .oni-image-container img {
   max-width: 80%;   /* 画面幅の80%を最大幅にする */
   max-height: 80%;  /* 画面高さの80%を最大高さにする */
-  /* border: 3px solid white;
-  border-radius: 10px;
-  box-shadow: 0 0 30px rgba(0,0,0,0.5); */
 }
 
 #key-guide {
@@ -636,13 +655,23 @@ body {
   bottom: 50px;
   /* top: 20%;
   left: 60%; */
-  left: 51%;
-  bottom: 12%;
+  left: 50%;
+  bottom: 60%;
   transform: translateX(-50%);
   z-index: 100;
 }
 
-.transition-button-container button {
+.transition-button-container2 {
+  position: absolute;
+  bottom: 50px;
+  top: 55%;
+  left: 20%;
+  transform: translateX(-50%);
+  z-index: 100;
+}
+
+.transition-button-container button,
+.transition-button-container2 button {
   padding: 15px 30px;
   font-size: 18px;
   font-weight: bold;
