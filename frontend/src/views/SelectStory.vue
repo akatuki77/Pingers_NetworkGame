@@ -1,8 +1,10 @@
 <template>
   <BackView />
+  <UserInfo v-if="userStore.isLoggedIn" />
   <div ref="container" class="canvas-container"></div>
   <!-- toで戻りたいところを指定する -->
   <BackButton to="/"/>
+
 </template>
 
 <script setup>
@@ -12,11 +14,14 @@ import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
 import { useRouter } from 'vue-router';
 import BackView from '@/components/BackView.vue';//背景を表示するコンポーネント
+import UserInfo from '@/components/UserInfo.vue';
 import BackButton from '@/components/BackButton.vue';//戻るボタンを表示するコンポーネント
+import { useUserStore } from '@/stores/userStore'; // ★ 変更点: Piniaストアをインポート
 
 const container = ref(null);
 const router = useRouter();
 const raycaster = new THREE.Raycaster();
+const userStore = useUserStore(); // ★ 変更点: ストアをインスタンス化
 const mouse = new THREE.Vector2();
 
 let renderer, scene, camera;

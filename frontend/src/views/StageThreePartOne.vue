@@ -58,9 +58,12 @@ import { useCharacterKeymap } from "@/composable/useCharacterKeymap.js";
 import { useCharacter } from "@/composable/useCharacter.js";
 import { useKeyboard } from "@/composable/useKeyboard.js";
 import { useRouter } from 'vue-router';
+import { useStageClear } from "@/composable/useStageClear";//クリアしたときのデータ登録
 
 // === Vue リアクティブな状態管理 ===
 const canvasContainer = ref(null);
+const { saveClearRecord } = useStageClear(); //関数を取り出す
+const stageId = 4;
 
 // UIの状態
 const speechBubble = ref({ visible: false, text: "", x: 0, y: 0 });
@@ -489,7 +492,8 @@ function hideQuestionModal() {
 }
 
 function goToStageThreePartTwo() {
-  // '/stage-3-2' の部分は、実際のルート設定に合わせて変更してください
+  // '/stage-3-2' の部分は、実際のルート設定に合わせて変更
+  saveClearRecord(stageId); // クリア記録を保存
   router.push('/Stage-3-2');
 }
 </script>

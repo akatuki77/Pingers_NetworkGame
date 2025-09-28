@@ -66,10 +66,13 @@ import { useKeyboard } from "@/composable/useKeyboard.js";
 import { useRouter } from 'vue-router';
 import oniDefeatedImage from "@/assets/image/oni_taiji.png";
 import momoDefeatedImage from "@/assets/image/momo_taiji.png";
+import { useStageClear } from "@/composable/useStageClear";//クリアしたときのデータ登録
 
 // === Vue リアクティブな状態管理 ===
 const canvasContainer = ref(null);
 const answerInput = ref(null);
+const { saveClearRecord } = useStageClear(); //関数を取り出す
+const stageId = 6;
 
 // UIの状態
 const speechBubble = ref({ visible: false, text: "", x: 0, y: 0 });
@@ -430,7 +433,8 @@ function hideOniImage() {
 }
 
 function goToStageFourPartTwo() {
-  // '/stage-4-2' の部分は、実際のルート設定に合わせて変更してください
+  // '/stage-4-2' の部分は、実際のルート設定に合わせて変更
+  saveClearRecord(stageId); // クリアデータを保存
   router.push('/Stage-4-2');
 }
 </script>

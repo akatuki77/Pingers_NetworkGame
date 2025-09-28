@@ -1,6 +1,7 @@
 <template>
   <div class="content-page">
     <BackView />
+    <UserInfo v-if="userStore.isLoggedIn" />
     <div ref="container" class="canvas-container"></div>
     <BackButton to="/select-story" />
 
@@ -31,8 +32,12 @@
       <template v-else-if="selectedChapter">
         <ul class="sub-chapter-list">
           <li v-for="sub in selectedChapter.subChapters" :key="sub.id" @click="selectSubChapter(sub)">
-            <span>{{ sub.id }}</span>
-            <span>{{ sub.title }}</span>
+            <span v-if="isStageCleared(sub)" class="cleared-mark">〇</span>
+            <span v-else class="cleared-mark"></span>
+            <div class="sub-chapter-text">
+              <span>{{ sub.id }}</span>
+              <span>{{ sub.title }}</span>
+            </div>
           </li>
         </ul>
       </template>
@@ -53,12 +58,15 @@ import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
 import { CSS3DRenderer, CSS3DObject } from 'three/examples/jsm/renderers/CSS3DRenderer.js';
 import BackView from '@/components/BackView.vue';
 import BackButton from '@/components/BackButton.vue';
+import UserInfo from '@/components/UserInfo.vue';
+import { useUserStore } from '@/stores/userStore'; // ★ 変更点: Piniaストアをインポート
 
 // --- データとルーターの準備 ---
 const router = useRouter();
 const route = useRoute();
+const userStore = useUserStore(); // ★ 変更点: Piniaストアをインスタンス化
 
-// --- 物語データ ---
+// --- 物語データ
 const storyContent = {
   '1': {
     title: 'ももたろう',
@@ -68,31 +76,31 @@ const storyContent = {
         number: '第一章',
         name: '刀購入編',
         subChapters: [
-          { id: '1-1', title: '鍛冶の村へ', summary: 'まずは旅の準備だ！鬼を退治するために必要なものを手に入れるため、\n最初の目的地である「鍛冶の村」へ向かおう。', routeName: 'Stage-1-1' },
+          { id: '1-1', stageId: 1, title: '鍛冶の村へ', summary: 'まずは旅の準備だ！鬼を退治するために必要なものを手に入れるため、\n最初の目的地である「鍛冶の村」へ向かう。', routeName: 'Stage-1-1' },
         ]
       },
       {
         number: '第二章',
         name: '港町編 ',
         subChapters: [
-          { id: '2-1', title: '国境の門番', summary: '港町へ向かう途中、大きな国境にたどり着いた。\nどの門を進めば良いかわからない。国境の門番に、目的地の港町へ行くための正しい道を教えてもらおう。', routeName: 'Stage-2-1' },
-          { id: '2-2', title: '国境を越えて', summary: '門番に教えてもらった正しい道順を知ることで、迷わずに目的地へたどり着けるはずだ。\n港町を目指そう！', routeName: 'Stage-2-2' },
+          { id: '2-1', stageId: 2, title: '国境の門番', summary: '港町へ向かう途中、大きな国境にたどり着いた。\nどの門を進めば良いかわからない。国境の門番に、目的地の港町へ行くための正しい道を教えてもらおう。', routeName: 'Stage-2-1' },
+          { id: '2-2', stageId: 3, title: '国境を越えて', summary: '門番に教えてもらった正しい道順を知ることで、迷わずに目的地へたどり着けるはずだ。\n港町を目指そう！', routeName: 'Stage-2-2' },
         ]
       },
       {
         number: '第三章',
         name: '仲間集め編 ',
         subChapters: [
-          { id: '3-1', title: 'きびだんごを配ろう', summary: '港町にはたくさんの動物がいる。鬼退治に協力してくれる仲間を探すため、\nまずはきびだんごを配って顔と名前を覚えよう。', routeName: 'Stage-3-1' },
-          { id: '3-2', title: '仲間を誘おう', summary: '鬼退治の意志があるのは犬、猿、キジだとわかった。今度はその3匹を名指しで誘いに行き、討伐隊を結成しよう！', routeName: 'Stage-3-2' },
+          { id: '3-1', stageId: 4, title: 'きびだんごを配ろう', summary: '港町にはたくさんの動物がいる。鬼退治に協力してくれる仲間を探すため、\nまずはきびだんごを配って顔と名前を覚えよう。', routeName: 'Stage-3-1' },
+          { id: '3-2', stageId: 5, title: '仲間を誘おう', summary: '鬼退治の意志があるのは犬、猿、キジだとわかった。今度はその3匹を名指しで誘いに行き、討伐隊を結成しよう！', routeName: 'Stage-3-2' },
         ]
       },
       {
         number: '第四章',
         name: '鬼ヶ島編 ',
         subChapters: [
-          { id: '4-1', title: '決戦！鬼ヶ島', summary: '準備は整ったが、鬼ヶ島への行き方がわからない。\n外の世界への唯一の出口を知っている漁師に、鬼ヶ島まで船を出してくれるようお願いしよう。', routeName: 'Stage-4-1' },
-          { id: '4-2', title: '冒険の終わり', summary: '戦いの後には、仲間たちが旅の総復習クイズを出してくれるぞ！', routeName: 'Stage-4-2' },
+          { id: '4-1', stageId: 6, title: '決戦！鬼ヶ島', summary: '準備は整ったが、鬼ヶ島への行き方がわからない。\n外の世界への唯一の出口を知っている漁師に、鬼ヶ島まで船を出してくれるようお願いしよう。', routeName: 'Stage-4-1' },
+          { id: '4-2', stageId: 7, title: '冒険の終わり', summary: '戦いの後には、仲間たちが旅の総復習クイズを出してくれるぞ！', routeName: 'Stage-4-2' },
         ]
       },
     ],
@@ -107,6 +115,31 @@ const storyOverlay = ref(null);
 const subChapterOverlay = ref(null);
 const selectedChapter = ref(null);
 const selectedSubChapter = ref(null);
+const clearedStages = ref(new Set()); // ★ 変更点: クリア済みステージIDを保持するSet
+
+// ★ 変更点: クリア済みステージか判定する関数
+const isStageCleared = (subChapter) => {
+  return clearedStages.value.has(subChapter.stageId);
+};
+
+// ★ 変更点: クリア情報をバックエンドから取得する関数
+const fetchClearedStages = async () => {
+  // ログインしていなければ何もしない
+  if (!userStore.isLoggedIn || !userStore.user?.id) {
+    return;
+  }
+  try {
+    const response = await fetch(`http://localhost:3000/api/records/${userStore.user.id}`);
+    if (response.ok) {
+      const records = await response.json();
+      const clearedIds = records.map(record => record.stage_id);
+      clearedStages.value = new Set(clearedIds);
+    }
+  } catch (error) {
+    console.error('クリア情報の取得に失敗しました:', error);
+  }
+};
+
 
 // --- クリック処理 ---
 const selectChapter = (chapter) => {
@@ -118,7 +151,6 @@ const selectSubChapter = (subChapter) => {
   selectedSubChapter.value = subChapter;
 };
 
-// ★ 変更点: router.pushを名前付きルートに変更
 const onClickSubChapter = () => {
   if (selectedSubChapter.value && selectedSubChapter.value.routeName) {
     router.push({ name: selectedSubChapter.value.routeName });
@@ -200,7 +232,13 @@ const animate = () => {
   renderer.render(scene, camera);
   css3dRenderer.render(scene, camera);
 };
-onMounted(() => { init(); animate(); });
+
+onMounted(() => {
+  fetchClearedStages(); // ★ 変更点: マウント時にクリア情報を取得
+  init();
+  animate();
+});
+
 onUnmounted(() => {
   cancelAnimationFrame(animationId);
   window.removeEventListener('resize', onWindowResize);
@@ -301,6 +339,7 @@ onUnmounted(() => {
 }
 .sub-chapter-list li {
   display: flex;
+  align-items: center;
   gap: 0.5em;
   font-size: 1.5em;
   padding: 0.3em 0.5em;
@@ -312,8 +351,21 @@ onUnmounted(() => {
 .sub-chapter-list li:hover {
   background-color: rgba(0, 0, 0, 0.1);
 }
-.sub-chapter-list li span:first-child {
+.sub-chapter-text {
+  display: flex;
+  gap: 0.5em;
+}
+.sub-chapter-text span:first-child {
   font-weight: bold;
+}
+/* ★ 変更点: クリアマーク用のCSS */
+.cleared-mark {
+  color: #28a745;
+  font-weight: bold;
+  font-size: 1.2em;
+  width: 1.5em;
+  text-align: center;
+  flex-shrink: 0;
 }
 .synopsis-view {
   display: flex;

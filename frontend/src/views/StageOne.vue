@@ -101,11 +101,13 @@ import { useCharacterKeymap } from "@/composable/useCharacterKeymap.js";
 import { useCharacter } from "@/composable/useCharacter.js";
 import { useKeyboard } from "@/composable/useKeyboard.js";
 import { useRouter } from "vue-router";
+import { useStageClear } from "@/composable/useStageClear";//クリアしたときのデータ登録
 
 // === Vue リアクティブな状態管理 ===
 const canvasContainer = ref(null);
 const answerInput = ref(null);
-
+const { saveClearRecord } = useStageClear(); //関数を取り出す
+const stageId = 1; //ステージID(2-1なら2)
 // UIの状態
 const speechBubble = ref({ visible: false, text: "", x: 0, y: 0 });
 const isAnswerModalVisible = ref(false);
@@ -439,16 +441,20 @@ function hideQuestionModal() {
 }
 
 function submitAnswer() {
-    if (!userAnswer.value) return;
-    const correctAnswer = castleLocations[currentQuestionIndex].name;
-    if (userAnswer.value.trim() === correctAnswer) {
-        feedbackText.value = '正解◎';
-        feedbackColor.value = 'green';
-        isCorrect.value = true;
-    } else {
-        feedbackText.value = '不正解…もう一度考えてみよう！';
-        feedbackColor.value = 'red';
-    }
+  if (!userAnswer.value) return;
+  const correctAnswer = castleLocations[currentQuestionIndex].name;
+  if (userAnswer.value.trim() === correctAnswer) {
+    feedbackText.value = '正解◎';
+    feedbackColor.value = 'green';
+    isCorrect.value = true;
+
+    // ★ 4. 正解した瞬間に、クリア情報を保存する関数を呼び出す
+    saveClearRecord(stageId);
+
+  } else {
+    feedbackText.value = '不正解…もう一度考えてみよう！';
+    feedbackColor.value = 'red';
+  }
 }
 
 function showExplanation() {
