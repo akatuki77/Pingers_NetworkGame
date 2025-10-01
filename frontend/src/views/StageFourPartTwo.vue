@@ -133,7 +133,7 @@ let closestAnimal = null;
 // クイズ情報
 const castleLocations = ref([
     { name: "IPアドレスについての問題だウキ！", location: "サル", x: -10, z: -2, object: null, hasDango: false, Message: "正解してるウキ！凄いウキ！" },
-    { name: "ルータについての問題だケーン！", location: "キジ", x: 7.4, z: 7.3, object: null, hasDango: false, Message: "正解してるケーン！凄いケーン！" },
+    { name: "ルータについての問題だケーン！", location: "キジ", x: 11.0, z: 10.0, object: null, hasDango: false, Message: "正解してるケーン！凄いケーン！" },
     { name: "スイッチについての問題だワン！", location: "イヌ", x: -6.9, z: 4.5, object: null, hasDango: false, Message: "正解してるワン！凄いワン！" },
 ]);
 
@@ -364,7 +364,7 @@ function loadModels() {
         raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
         intersects = raycaster.intersectObject(background, true);
         groundY = intersects.length > 0 ? intersects[0].point.y : 0;
-        pheasant.position.set(pheasantLocation.x, groundY + 3.6, pheasantLocation.z);
+        pheasant.position.set(pheasantLocation.x, groundY, pheasantLocation.z);
         pheasant.rotation.y = -Math.PI / 2; // 反転
         scene.add(pheasant);
         collidableObjects.push(pheasant);
@@ -466,11 +466,15 @@ watch(() => keysPressed.value['enter'], (isPressed) => {
 // Escapeキーでモーダルを閉じる
 watch(() => keysPressed.value['escape'], (isPressed) => {
   if (isPressed) {
-    if (isAnimalQuizModalVisible.value) {
-      hideAnimalQuizModal();
-    } else if (isExplanationModalVisible.value) {
+    if (isExplanationModalVisible.value) {
       closeExplanation();
-    } else if (isQuestionModalVisible.value) {
+    } 
+    // ★ 2. 次に「動物クイズモーダル」をチェック
+    else if (isAnimalQuizModalVisible.value) {
+      hideAnimalQuizModal();
+    } 
+    // ★ 3. 最後に、一番下にある可能性が高い「問題文モーダル」をチェック
+    else if (isQuestionModalVisible.value) {
       hideQuestionModal();
     }
   }

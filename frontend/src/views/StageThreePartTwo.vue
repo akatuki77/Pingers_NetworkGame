@@ -127,8 +127,8 @@ let collisionTargetObject = null;
 
 // クイズ情報
 const castleLocations = [
-    { name: "オイラ、桃太郎さんについていくウキ！", location: "サル", x: -11.2, z: -2, object: null },
-    { name: "鬼ヶ島までお供するケーン！", location: "キジ", x: 2.5, z: 7, object: null },
+    { name: "オイラ、桃太郎さんについていくウキ！", location: "サル", x: -10, z: -2, object: null },
+    { name: "鬼ヶ島までお供するケーン！", location: "キジ", x: 11.0, z: 10.0, object: null },
     { name: "鬼退治、ぜひ手伝わせてほしいワン！", location: "イヌ", x: -6.9, z: 4.5, object: null },
     { name: "Enterを押すと、問題文と選択肢が表示されるぜ！", location: "漁師", x: -1, z: -6.4, object: null },
 ];
@@ -314,7 +314,7 @@ function loadModels() {
         raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
         intersects = raycaster.intersectObject(background, true);
         groundY = intersects.length > 0 ? intersects[0].point.y : 0;
-        monkey.position.set(monkeyLocation.x, groundY + 2.15, monkeyLocation.z);
+        monkey.position.set(monkeyLocation.x, groundY, monkeyLocation.z);
         monkey.rotation.y = Math.PI / 2; // 反転
         scene.add(monkey);
         collidableObjects.push(monkey);
@@ -329,6 +329,7 @@ function loadModels() {
         intersects = raycaster.intersectObject(background, true);
         groundY = intersects.length > 0 ? intersects[0].point.y : 0;
         pheasant.position.set(pheasantLocation.x, groundY, pheasantLocation.z);
+        pheasant.rotation.y = -Math.PI / 2; // 反転
         scene.add(pheasant);
         collidableObjects.push(pheasant);
 
