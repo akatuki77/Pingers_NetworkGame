@@ -363,6 +363,17 @@ watch(() => keysPressed.value['enter'], (isPressed) => {
     }
 });
 
+watch(() => keysPressed.value['escape'], (isPressed, wasPressed) => {
+  // Escキーが「押された瞬間」だけを判定
+  if (isPressed && !wasPressed) {
+    // そうでなく、問題文モーダルが表示されていたら、それを閉じる
+    if (isQuestionModalVisible.value) {
+      hideQuestionModal();
+    }
+
+  }
+});
+
 // アニメーションループ
 function animate() {
   animationFrameId = requestAnimationFrame(animate);
@@ -634,7 +645,7 @@ body {
 #key-guide {
   position: absolute;
   bottom: 30px;
-  left: 53%;
+  left: 50%;
   transform: translateX(0%);
   /* background-color: rgba(0, 0, 0, 0.5); */
   /* color: white; */
@@ -660,43 +671,39 @@ body {
 
 .transition-button-container {
   position: absolute;
-  bottom: 50px;
-  /* top: 20%;
-  left: 60%; */
-  left: 51%;
-  bottom: 12%;
+  bottom: 35px;
+  left: 90%;
   transform: translateX(-50%);
   z-index: 100;
 }
 
 .transition-button-container button {
-  padding: 15px 30px;
-  font-size: 18px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 30px;
   font-weight: bold;
   cursor: pointer;
-  border-radius: 8px;
   border: none;
-  background-color: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  border: 1px solid #ccc;
+  background-color: #ff69b4; /* ホットピンク */
+  color: white;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
 
 .action-button-container {
   position: absolute;
-  bottom: 40px;
-  left: 51%;
-  bottom: 12%;
+  bottom: 35px;
+  left: 87%;
   transform: translateX(-50%);
   z-index: 100;
   text-align: center;
 }
 
 .action-button-container button {
-  padding: 12px 25px;
-  font-size: 16px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 25px;
   font-weight: bold;
   cursor: pointer;
-  border-radius: 30px;
   border: none;
   background-color: #ff69b4; /* ホットピンク */
   color: white;

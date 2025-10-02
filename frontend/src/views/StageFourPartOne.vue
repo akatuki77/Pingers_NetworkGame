@@ -56,7 +56,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick, watch } from "vue";
+import { ref, onMounted, onUnmounted, watch } from "vue";
 import * as THREE from "three";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
@@ -71,12 +71,9 @@ import momoDefeatedImage from "@/assets/image/momo_taiji.png";
 
 // === Vue リアクティブな状態管理 ===
 const canvasContainer = ref(null);
-const answerInput = ref(null);
 
 // UIの状態
 const speechBubble = ref({ visible: false, text: "", x: 0, y: 0 });
-const isAnswerModalVisible = ref(false);
-const isExplanationModalVisible = ref(false);
 const isCorrect = ref(false);
 const persistentLabels = ref([]); // 常時表示ラベル用の配列
 const isQuestionModalVisible = ref(false);
@@ -591,7 +588,7 @@ body {
   justify-content: center;
   align-items: center;
   background-color: rgba(0, 0, 0, 0.6); /* ★ 半透明の黒に変更 */
-  z-index: 200; 
+  z-index: 200;
   opacity: 1;
   visibility: visible;
   transition: opacity 0.7s ease, visibility 0.7s ease;
@@ -602,7 +599,7 @@ body {
   opacity: 0;
   transform: translateY(0);
   /* ★ クリックなどを邪魔しないように */
-  pointer-events: none; 
+  pointer-events: none;
 }
 
 /* こちらが「画像と、その周りの白い枠」の役割 */

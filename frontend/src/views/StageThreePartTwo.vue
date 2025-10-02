@@ -400,20 +400,53 @@ function onWindowResize() {
 }
 
 // Enterキーで回答モーダルを開く
-watch(() => keysPressed.value['enter'], (isPressed) => {
-  if (isPressed && !isAnswerModalVisible.value) { // モーダルが既に開いていなければ
-    isAnswerModalVisible.value = true;
-    nextTick(() => {
-      if(answerInput.value) answerInput.value.focus();
-    });
+watch(() => keysPressed.value['enter'], (isPressed, wasPressed) => {
+  // Enterキーが「押された瞬間」だけを判定
+  if (isPressed && !wasPressed) {
+
+    // 【状況A】回答モーダルが表示されている場合
+    if (isAnswerModalVisible.value) {
+
+      // A-1: 正解して「解説を見る」ボタンが表示されている状態なら
+      if (isCorrect.value) {
+        showExplanation();
+      }
+      // A-2: まだ回答入力中の状態なら
+      else {
+        submitAnswer(); // ★ ここで回答を送信する
+      }
+
+    }
+    // 【状況B】どのモーダルも表示されていない場合
+    else if (!isQuestionModalVisible.value && !isExplanationModalVisible.value) {
+      isAnswerModalVisible.value = true;
+      // フォーカスを当てる処理
+      nextTick(() => {
+        setTimeout(() => {
+          if (answerInput.value) {
+            answerInput.value.focus();
+          }
+        }, 100);
+      });
+    }
   }
 });
 
-// Escapeキーでモーダルを閉じる
-watch(() => keysPressed.value['escape'], (isPressed) => {
-  if (isPressed) {
-    isAnswerModalVisible.value = false;
-    isExplanationModalVisible.value = false;
+watch(() => keysPressed.value['escape'], (isPressed, wasPressed) => {
+  // Escキーが「押された瞬間」だけを判定
+  if (isPressed && !wasPressed) {
+    // 優先順位1：解説モーダルが表示されていたら、それを閉じる
+    if (isExplanationModalVisible.value) {
+      closeExplanation();
+    }
+    // 優先順位2：そうでなく、回答モーダルが表示されていたら、それを閉じる
+    else if (isAnswerModalVisible.value) {
+      isAnswerModalVisible.value = false;
+    }
+    // 優先順位3：そうでなく、問題文モーダルが表示されていたら、それを閉じる
+    else if (isQuestionModalVisible.value) {
+      hideQuestionModal();
+    }
   }
 });
 
