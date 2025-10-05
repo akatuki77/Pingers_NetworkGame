@@ -51,7 +51,6 @@
           type="text"
           v-model="userAnswer"
           placeholder="答えの番号を入力"
-          @keydown.enter="submitAnswer"
           class="large-form-element"
         />
         <button @click="submitAnswer" class="large-form-element">回答</button>
@@ -82,7 +81,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from "vue";
+import { ref, onMounted, onUnmounted, watch, nextTick } from "vue";
 import * as THREE from "three";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
@@ -94,6 +93,7 @@ import { useKeyboard } from "@/composable/useKeyboard.js";
 
 // === Vue リアクティブな状態管理 ===
 const canvasContainer = ref(null);
+const answerInput = ref(null);
 
 // UIの状態
 const speechBubble = ref({ visible: false, text: "", x: 0, y: 0 });
@@ -453,13 +453,37 @@ function startQuiz() {
       isCorrect.value = false;
 
       isAnimalQuizModalVisible.value = true; // 回答モーダルを表示
+
+      nextTick(() => {
+        setTimeout(() => {
+          if (answerInput.value) {
+            answerInput.value.focus();
+          }
+        }, 100);
+      });
     }
 }
 
-watch(() => keysPressed.value['enter'], (isPressed) => {
-  // ★ ボタンが表示されている（＝遷移ゾーンにいる）時だけ、キーを有効にする
-  if (isPressed && isDangoButtonVisible.value) {
-      startQuiz();
+watch(() => keysPressed.value['enter'], (isPressed, wasPressed) => {
+  // Enterキーが「押された瞬間」だけを判定
+  if (isPressed && !wasPressed) {
+
+    // 【状況A】動物クイズモーダルが表示されている場合
+    if (isAnimalQuizModalVisible.value) {
+      
+      // A-1: 正解して「解説を見る」ボタンが表示されている状態なら
+      if (isCorrect.value) {
+        showExplanation();
+      } 
+      // A-2: まだ回答入力中の状態なら
+      else {
+        submitAnswer();
+      }
+    } 
+    // 【状況B】きびだんごボタンが表示されている場合
+    else if (isDangoButtonVisible.value) {
+      startQuiz(); // クイズを開始
+    }
   }
 });
 
@@ -612,7 +636,7 @@ function displayQuestion() {
     userAnswer.value = '';
     isCorrect.value = false;
 
-    isAnimalQuizModalVisible.value = true; // ★ 動物クイズモーダルを表示
+    // isAnimalQuizModalVisible.value = true; // ★ 動物クイズモーダルを表示
 }
 
 function showQuestionModal() {
@@ -810,6 +834,10 @@ body {
 .modal-content button,
 .modal-content input {
   margin: 5px;
+  font-size: 22px;
+  padding: 8px 16px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
 }
 
 #feedback-text {
@@ -831,8 +859,6 @@ body {
   bottom: 30px;
   left: 53%;
   transform: translateX(0%);
-  /* background-color: rgba(0, 0, 0, 0.5); */
-  /* color: white; */
   color: black;
   padding: 10px 20px;
   border-radius: 10px;
@@ -855,20 +881,18 @@ body {
 
 .action-button-container {
   position: absolute;
-  bottom: 40px;
-  left: 51%;
-  bottom: 12%;
+  bottom: 35px;
+  left: 90%;
   transform: translateX(-50%);
   z-index: 100;
-  text-align: center;
 }
 
 .action-button-container button {
-  padding: 12px 25px;
-  font-size: 16px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 25px;
   font-weight: bold;
   cursor: pointer;
-  border-radius: 30px;
   border: none;
   background-color: #ff69b4; /* ホットピンク */
   color: white;

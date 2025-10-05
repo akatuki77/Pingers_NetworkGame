@@ -623,7 +623,7 @@ body {
 #key-guide {
   position: absolute;
   bottom: 30px;
-  left: 53%;
+  left: 50%;
   transform: translateX(0%);
   /* background-color: rgba(0, 0, 0, 0.5); */
   /* color: white; */
@@ -647,36 +647,32 @@ body {
   font-family: inherit;
 }
 
-.transition-button-container {
-  position: absolute;
-  bottom: 50px;
-  /* top: 20%;
-  left: 60%; */
-  left: 50%;
-  bottom: 60%;
-  transform: translateX(-50%);
-  z-index: 100;
-}
-
+.transition-button-container,
 .transition-button-container2 {
   position: absolute;
-  bottom: 50px;
-  top: 55%;
-  left: 20%;
+  bottom: 35px;
+  left: 90%;
   transform: translateX(-50%);
   z-index: 100;
 }
 
 .transition-button-container button,
 .transition-button-container2 button {
-  padding: 15px 30px;
-  font-size: 18px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 25px;
   font-weight: bold;
   cursor: pointer;
-  border-radius: 8px;
   border: none;
-  background-color: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  border: 1px solid #ccc;
+  background-color: #ff69b4; /* ホットピンク */
+  color: white;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+}
+
+.transition-button-container button:hover,
+.transition-button-container2 button:hover {
+  background-color: #ff85c1;
+  transform: translateY(-2px);
 }
 </style>

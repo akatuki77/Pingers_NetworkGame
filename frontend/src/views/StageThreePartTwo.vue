@@ -401,26 +401,23 @@ function onWindowResize() {
 
 // Enterキーで回答モーダルを開く
 watch(() => keysPressed.value['enter'], (isPressed, wasPressed) => {
-  // Enterキーが「押された瞬間」だけを判定
   if (isPressed && !wasPressed) {
 
     // 【状況A】回答モーダルが表示されている場合
     if (isAnswerModalVisible.value) {
-
-      // A-1: 正解して「解説を見る」ボタンが表示されている状態なら
+      // A-1: 正解してクリア演出が表示されている状態なら
       if (isCorrect.value) {
         showExplanation();
       }
-      // A-2: まだ回答入力中の状態なら
+      // A-2: 回答入力中の状態なら
       else {
-        submitAnswer(); // ★ ここで回答を送信する
+        // submitAnswerを呼び出し、その結果（true/false）をisCorrectにセット
+        isCorrect.value = submitAnswer(); 
       }
-
     }
     // 【状況B】どのモーダルも表示されていない場合
     else if (!isQuestionModalVisible.value && !isExplanationModalVisible.value) {
       isAnswerModalVisible.value = true;
-      // フォーカスを当てる処理
       nextTick(() => {
         setTimeout(() => {
           if (answerInput.value) {
@@ -452,6 +449,7 @@ watch(() => keysPressed.value['escape'], (isPressed, wasPressed) => {
 
 // アニメーションループ
 function animate() {
+    persistentLabels.value.forEach(label => label.visible = true);
     animationFrameId = requestAnimationFrame(animate);
     const delta = clock.getDelta();
 
@@ -488,6 +486,11 @@ function animate() {
         speechBubble.value.visible = true;
         speechBubble.value.text = closestCastle.name;
         collisionTargetObject = closestCastle.object; // 吹き出しの位置決めに使うオブジェクト
+
+        const labelToHide = persistentLabels.value.find(label => label.text === closestCastle.location);
+        if (labelToHide) {
+          labelToHide.visible = false;
+        }
     } else {
         // 範囲外なら吹き出しを非表示
         speechBubble.value.visible = false;
@@ -559,7 +562,7 @@ function hideQuestionModal() {
 
 // 回答の提出
 function submitAnswer() {
-    const currentQuizData = quiz.value[0];
+  const currentQuizData = quiz.value[0];
   if (!currentQuizData || !userAnswer.value) return;
 
   const playerInput = parseInt(userAnswer.value.trim());
@@ -576,11 +579,13 @@ function submitAnswer() {
   if (playerIndex === currentQuizData.correctAnswerIndex) {
     feedbackText.value = '正解◎';
     feedbackColor.value = 'green';
-    isCorrect.value = true;
   } else {
     feedbackText.value = '不正解…もう一度考えてみよう！';
     feedbackColor.value = 'red';
   }
+
+  // submitAnswerの最後にこれを追加
+  return playerIndex === currentQuizData.correctAnswerIndex;
 }
 
 // 解説モーダルの表示
@@ -738,6 +743,10 @@ body {
 .modal-content button,
 .modal-content input {
   margin: 5px;
+  font-size: 22px;
+  padding: 8px 16px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
 }
 
 #feedback-text {
