@@ -44,7 +44,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, watch } from "vue";
 import * as THREE from "three";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
@@ -86,7 +86,7 @@ let collisionTargetObject = null;
 
 // クイズ情報
 const castleLocations = [
-    { name: "関所Cに行けば、港町へ辿り着けるであろう。", location: "関所Aの門番", x: 3, z: -6, object: null },
+    { name: "関所Aを通り抜けて、関所Cに行けば、港町へ辿り着けるであろう。", location: "関所Aの門番", x: 3, z: -6, object: null },
 ];
 let animationFrameId;
 
@@ -289,8 +289,27 @@ function onWindowResize() {
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
+watch(() => keysPressed.value['enter'], (isPressed) => {
+  // ★ ボタンが表示されている（＝遷移ゾーンにいる）時だけ、キーを有効にする
+  if (isPressed && isTransitionButtonVisible.value) {
+    goToStageTwoPartTwo(); // 画面遷移する関数を呼び出す
+  }
+});
+
+watch(() => keysPressed.value['escape'], (isPressed, wasPressed) => {
+  // Escキーが「押された瞬間」だけを判定
+  if (isPressed && !wasPressed) {
+    // そうでなく、問題文モーダルが表示されていたら、それを閉じる
+    if (isQuestionModalVisible.value) {
+      hideQuestionModal();
+    }
+
+  }
+});
+
 // アニメーションループ
 function animate() {
+  persistentLabels.value.forEach(label => label.visible = true);
   animationFrameId = requestAnimationFrame(animate);
   const delta = clock.getDelta();
 
@@ -343,6 +362,11 @@ function animate() {
             speechBubble.value.visible = true;
             speechBubble.value.text = closestCastle.name;
             collisionTargetObject = closestCastle.object; // 吹き出しの位置決めに使うオブジェクト
+
+            const labelToHide = persistentLabels.value.find(label => label.text === closestCastle.location);
+            if (labelToHide) {
+              labelToHide.visible = false;
+            }
         } else {
             // 範囲外なら吹き出しを非表示
             speechBubble.value.visible = false;
@@ -574,22 +598,21 @@ body {
 
 .transition-button-container {
   position: absolute;
-  bottom: 50px;
-  top: 34%;
-  left: 79%;
+  bottom: 35px;
+  left: 90%;
   transform: translateX(-50%);
   z-index: 100;
 }
 
 .transition-button-container button {
-  padding: 15px 30px;
-  font-size: 18px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 30px;
   font-weight: bold;
   cursor: pointer;
-  border-radius: 8px;
   border: none;
-  background-color: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  border: 1px solid #ccc;
+  background-color: #ff69b4; /* ホットピンク */
+  color: white;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
 </style>
