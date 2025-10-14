@@ -23,7 +23,7 @@ export function useCharacterKeymap(characterHook, keysPressed) {
 
   // WASDキーでの移動アニメーション切り替え
   watch(keysPressed, (currentKeys) => {
-    const isMoving = currentKeys['w'] || currentKeys['a'] || currentKeys['s'] || currentKeys['d'];
+    const isMoving = currentKeys['arrowup'] || currentKeys['arrowleft'] || currentKeys['arrowdown'] || currentKeys['arrowright'] || currentKeys['w'] || currentKeys['a'] || currentKeys['s'] || currentKeys['d'];
     const idle = characterHook.idleAction;
     const walk = characterHook.walkAction;
 

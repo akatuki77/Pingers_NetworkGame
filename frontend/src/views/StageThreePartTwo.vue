@@ -130,8 +130,8 @@ let collisionTargetObject = null;
 
 // クイズ情報
 const castleLocations = [
-    { name: "オイラ、桃太郎さんについていくウキ！", location: "サル", x: -11.2, z: -2, object: null },
-    { name: "鬼ヶ島までお供するケーン！", location: "キジ", x: 2.5, z: 7, object: null },
+    { name: "オイラ、桃太郎さんについていくウキ！", location: "サル", x: -10, z: -2, object: null },
+    { name: "鬼ヶ島までお供するケーン！", location: "キジ", x: 11.0, z: 10.0, object: null },
     { name: "鬼退治、ぜひ手伝わせてほしいワン！", location: "イヌ", x: -6.9, z: 4.5, object: null },
     { name: "Enterを押すと、問題文と選択肢が表示されるぜ！", location: "漁師", x: -1, z: -6.4, object: null },
 ];
@@ -317,7 +317,7 @@ function loadModels() {
         raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
         intersects = raycaster.intersectObject(background, true);
         groundY = intersects.length > 0 ? intersects[0].point.y : 0;
-        monkey.position.set(monkeyLocation.x, groundY + 2.15, monkeyLocation.z);
+        monkey.position.set(monkeyLocation.x, groundY, monkeyLocation.z);
         monkey.rotation.y = Math.PI / 2; // 反転
         scene.add(monkey);
         collidableObjects.push(monkey);
@@ -332,6 +332,7 @@ function loadModels() {
         intersects = raycaster.intersectObject(background, true);
         groundY = intersects.length > 0 ? intersects[0].point.y : 0;
         pheasant.position.set(pheasantLocation.x, groundY, pheasantLocation.z);
+        pheasant.rotation.y = -Math.PI / 2; // 反転
         scene.add(pheasant);
         collidableObjects.push(pheasant);
 
@@ -402,25 +403,56 @@ function onWindowResize() {
 }
 
 // Enterキーで回答モーダルを開く
-watch(() => keysPressed.value['enter'], (isPressed) => {
-  if (isPressed && !isAnswerModalVisible.value) { // モーダルが既に開いていなければ
-    isAnswerModalVisible.value = true;
-    nextTick(() => {
-      if(answerInput.value) answerInput.value.focus();
-    });
+watch(() => keysPressed.value['enter'], (isPressed, wasPressed) => {
+  if (isPressed && !wasPressed) {
+
+    // 【状況A】回答モーダルが表示されている場合
+    if (isAnswerModalVisible.value) {
+      // A-1: 正解してクリア演出が表示されている状態なら
+      if (isCorrect.value) {
+        showExplanation();
+      }
+      // A-2: 回答入力中の状態なら
+      else {
+        // submitAnswerを呼び出し、その結果（true/false）をisCorrectにセット
+        isCorrect.value = submitAnswer(); 
+      }
+    }
+    // 【状況B】どのモーダルも表示されていない場合
+    else if (!isQuestionModalVisible.value && !isExplanationModalVisible.value) {
+      isAnswerModalVisible.value = true;
+      nextTick(() => {
+        setTimeout(() => {
+          if (answerInput.value) {
+            answerInput.value.focus();
+          }
+        }, 100);
+      });
+    }
   }
 });
 
-// Escapeキーでモーダルを閉じる
-watch(() => keysPressed.value['escape'], (isPressed) => {
-  if (isPressed) {
-    isAnswerModalVisible.value = false;
-    isExplanationModalVisible.value = false;
+watch(() => keysPressed.value['escape'], (isPressed, wasPressed) => {
+  // Escキーが「押された瞬間」だけを判定
+  if (isPressed && !wasPressed) {
+    // 優先順位1：解説モーダルが表示されていたら、それを閉じる
+    if (isExplanationModalVisible.value) {
+      closeExplanation();
+    }
+    // 優先順位2：そうでなく、回答モーダルが表示されていたら、それを閉じる
+    else if (isAnswerModalVisible.value) {
+      isAnswerModalVisible.value = false;
+    }
+    // 優先順位3：そうでなく、問題文モーダルが表示されていたら、それを閉じる
+    else if (isQuestionModalVisible.value) {
+      hideQuestionModal();
+    }
   }
 });
 
 // アニメーションループ
 function animate() {
+    persistentLabels.value.forEach(label => label.visible = true);
     animationFrameId = requestAnimationFrame(animate);
     const delta = clock.getDelta();
 
@@ -457,6 +489,11 @@ function animate() {
         speechBubble.value.visible = true;
         speechBubble.value.text = closestCastle.name;
         collisionTargetObject = closestCastle.object; // 吹き出しの位置決めに使うオブジェクト
+
+        const labelToHide = persistentLabels.value.find(label => label.text === closestCastle.location);
+        if (labelToHide) {
+          labelToHide.visible = false;
+        }
     } else {
         // 範囲外なら吹き出しを非表示
         speechBubble.value.visible = false;
@@ -528,7 +565,7 @@ function hideQuestionModal() {
 
 // 回答の提出
 function submitAnswer() {
-    const currentQuizData = quiz.value[0];
+  const currentQuizData = quiz.value[0];
   if (!currentQuizData || !userAnswer.value) return;
 
   const playerInput = parseInt(userAnswer.value.trim());
@@ -551,6 +588,9 @@ function submitAnswer() {
     feedbackText.value = '不正解…もう一度考えてみよう！';
     feedbackColor.value = 'red';
   }
+
+  // submitAnswerの最後にこれを追加
+  return playerIndex === currentQuizData.correctAnswerIndex;
 }
 
 // 解説モーダルの表示
@@ -708,6 +748,10 @@ body {
 .modal-content button,
 .modal-content input {
   margin: 5px;
+  font-size: 22px;
+  padding: 8px 16px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
 }
 
 #feedback-text {

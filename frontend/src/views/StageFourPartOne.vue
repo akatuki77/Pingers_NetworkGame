@@ -32,20 +32,22 @@
     </div>
 
     <div id="key-guide">
-      <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> 移動
+      <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> 移動  <kbd>Enter</kbd> 決定  <kbd>Esc</kbd> 閉じる
     </div>
 
-    <div v-if="oniImageIsVisible" class="oni-image-container" @click.self="hideOniImage">
-      <p id="question-modal-text">鬼を退治した！港町まで戻ろう！</p><br>
-      <img :src="oniDefeatedImage" alt="鬼を倒した画像">
-      <img :src="momoDefeatedImage" alt="桃太郎が倒した画像">
+    <div class="oni-image-container" :class="{ hidden: !oniImageIsVisible }" @click.self="hideOniImage">
+      <div class="image-content-box">
+        <p id="question-modal-text">鬼を退治した！港町まで戻ろう！</p><br>
+        <img :src="oniDefeatedImage" alt="鬼を倒した画像">
+        <img :src="momoDefeatedImage" alt="桃太郎が倒した画像">
+      </div>
     </div>
 
     <div v-if="isTransitionButtonVisible" class="transition-button-container">
       <button @click="oniPicture">鬼退治へ行く</button>
     </div>
 
-    <div v-if="isStage42ButtonVisible" class="transition-button-container">
+    <div v-if="isStage42ButtonVisible" class="transition-button-container2">
       <button @click="goToStageFourPartTwo">4-2へ進む</button>
     </div>
   </div>
@@ -54,7 +56,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick, watch } from "vue";
+import { ref, onMounted, onUnmounted, watch } from "vue";
 import * as THREE from "three";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
@@ -76,8 +78,6 @@ const stageId = 6;
 
 // UIの状態
 const speechBubble = ref({ visible: false, text: "", x: 0, y: 0 });
-const isAnswerModalVisible = ref(false);
-const isExplanationModalVisible = ref(false);
 const isCorrect = ref(false);
 const persistentLabels = ref([]); // 常時表示ラベル用の配列
 const isQuestionModalVisible = ref(false);
@@ -290,21 +290,26 @@ function onWindowResize() {
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-// Enterキーで回答モーダルを開く
 watch(() => keysPressed.value['enter'], (isPressed) => {
-  if (isPressed && !isAnswerModalVisible.value) { // モーダルが既に開いていなければ
-    isAnswerModalVisible.value = true;
-    nextTick(() => {
-      if(answerInput.value) answerInput.value.focus();
-    });
+  // ★ ボタンが表示されている（＝遷移ゾーンにいる）時だけ、キーを有効にする
+  if (isPressed && isTransitionButtonVisible.value) {
+    oniPicture(); // 鬼退治へ行く関数を呼び出す
+  }
+
+  if (isPressed && isStage42ButtonVisible.value) {
+    goToStageFourPartTwo(); // 画面遷移する関数を呼び出す
   }
 });
 
 // Escapeキーでモーダルを閉じる
 watch(() => keysPressed.value['escape'], (isPressed) => {
   if (isPressed) {
-    isAnswerModalVisible.value = false;
-    isExplanationModalVisible.value = false;
+    if (isQuestionModalVisible.value) {
+      hideQuestionModal();
+    }
+    if (oniImageIsVisible.value) {
+      hideOniImage();
+    }
   }
 });
 
@@ -579,39 +584,51 @@ body {
 }
 
 .oni-image-container {
-  /* 画面全体に広がるコンテナにする */
-  position: absolute;
+  position: fixed; /* absoluteからfixedに変更すると、より確実です */
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-
-  /* 中の画像を中央に配置するための設定 */
   display: flex;
   justify-content: center;
   align-items: center;
-
-  /* 背景を少し暗くして画像を際立たせる */
-  background-color: rgba(0, 0, 0, 0.5);
-
-  /* ★★★ 最も重要 ★★★ */
-  /* 他のどの要素よりも手前に表示する (モーダルやボタンより大きい値に) */
+  background-color: rgba(0, 0, 0, 0.6); /* ★ 半透明の黒に変更 */
   z-index: 200;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.7s ease, visibility 0.7s ease;
+}
+
+.oni-image-container.hidden {
+  /* ★ 開始状態（見えない） */
+  opacity: 0;
+  transform: translateY(0);
+  /* ★ クリックなどを邪魔しないように */
+  pointer-events: none;
+}
+
+/* こちらが「画像と、その周りの白い枠」の役割 */
+.image-content-box {
+  background: white;
+  padding: 20px; /* ★ 白い枠の余白を調整 */
+  border-radius: 8px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+  /* 中の画像がはみ出さないように */
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* 画像自体のサイズを調整 */
 .oni-image-container img {
   max-width: 80%;   /* 画面幅の80%を最大幅にする */
   max-height: 80%;  /* 画面高さの80%を最大高さにする */
-  /* border: 3px solid white;
-  border-radius: 10px;
-  box-shadow: 0 0 30px rgba(0,0,0,0.5); */
 }
 
 #key-guide {
   position: absolute;
   bottom: 30px;
-  left: 53%;
+  left: 50%;
   transform: translateX(0%);
   /* background-color: rgba(0, 0, 0, 0.5); */
   /* color: white; */
@@ -635,26 +652,32 @@ body {
   font-family: inherit;
 }
 
-.transition-button-container {
+.transition-button-container,
+.transition-button-container2 {
   position: absolute;
-  bottom: 50px;
-  /* top: 20%;
-  left: 60%; */
-  left: 51%;
-  bottom: 12%;
+  bottom: 35px;
+  left: 90%;
   transform: translateX(-50%);
   z-index: 100;
 }
 
-.transition-button-container button {
-  padding: 15px 30px;
-  font-size: 18px;
+.transition-button-container button,
+.transition-button-container2 button {
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 25px;
   font-weight: bold;
   cursor: pointer;
-  border-radius: 8px;
   border: none;
-  background-color: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  border: 1px solid #ccc;
+  background-color: #ff69b4; /* ホットピンク */
+  color: white;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+}
+
+.transition-button-container button:hover,
+.transition-button-container2 button:hover {
+  background-color: #ff85c1;
+  transform: translateY(-2px);
 }
 </style>

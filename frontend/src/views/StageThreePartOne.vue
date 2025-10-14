@@ -48,7 +48,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, watch } from "vue";
 import * as THREE from "three";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
@@ -96,7 +96,7 @@ let closestAnimal = null;
 // クイズ情報
 const castleLocations = ref([
     { name: "きびだんごが食べたいウキ！", location: "サル", x: -10, z: -2, object: null, hasDango: false, Message: "ウキッ！うまい！このきびだんごの味、忘れないウキ！オイラ、桃太郎さんについていく！" },
-    { name: "きびだんごが食べたいケーン！", location: "キジ", x: 7.4, z: 7.3, object: null, hasDango: false, Message: "ケーン！これはこれは…。あなた様の家来になりましょう。鬼ヶ島までお供いたしますぞ！" },
+    { name: "きびだんごが食べたいケーン！", location: "キジ", x: 11.0, z: 10.0, object: null, hasDango: false, Message: "ケーン！これはこれは…。あなた様の家来になりましょう。鬼ヶ島までお供いたしますぞ！" },
     { name: "きびだんごが食べたいワン！", location: "イヌ", x: -6.9, z: 4.5, object: null, hasDango: false, Message: "ワン！なんて美味しいんだ…！このご恩、忘れませんワン。鬼退治、ぜひ手伝わせてください！" },
 ]);
 
@@ -280,7 +280,7 @@ function loadModels() {
         raycaster.set(rayOrigin, new THREE.Vector3(0, -1, 0));
         intersects = raycaster.intersectObject(background, true);
         groundY = intersects.length > 0 ? intersects[0].point.y : 0;
-        pheasant.position.set(pheasantLocation.x, groundY + 3.6, pheasantLocation.z);
+        pheasant.position.set(pheasantLocation.x, groundY, pheasantLocation.z);
         pheasant.rotation.y = -Math.PI / 2; // 反転
         scene.add(pheasant);
         collidableObjects.push(pheasant);
@@ -357,6 +357,25 @@ function giveDango() {
     checkAllAlliesGathered();
   }
 }
+
+watch(() => keysPressed.value['enter'], (isPressed) => {
+  if (isPressed && isDangoButtonVisible.value) {
+    giveDango(); // きびだんごを渡す関数を呼び出す
+  } else if (isPressed && isTransitionButtonVisible.value) {
+      goToStageThreePartTwo(); // 画面遷移する関数を呼び出す
+    }
+});
+
+watch(() => keysPressed.value['escape'], (isPressed, wasPressed) => {
+  // Escキーが「押された瞬間」だけを判定
+  if (isPressed && !wasPressed) {
+    // そうでなく、問題文モーダルが表示されていたら、それを閉じる
+    if (isQuestionModalVisible.value) {
+      hideQuestionModal();
+    }
+
+  }
+});
 
 // アニメーションループ
 function animate() {
@@ -630,7 +649,7 @@ body {
 #key-guide {
   position: absolute;
   bottom: 30px;
-  left: 53%;
+  left: 50%;
   transform: translateX(0%);
   /* background-color: rgba(0, 0, 0, 0.5); */
   /* color: white; */
@@ -656,43 +675,39 @@ body {
 
 .transition-button-container {
   position: absolute;
-  bottom: 50px;
-  /* top: 20%;
-  left: 60%; */
-  left: 51%;
-  bottom: 12%;
+  bottom: 35px;
+  left: 90%;
   transform: translateX(-50%);
   z-index: 100;
 }
 
 .transition-button-container button {
-  padding: 15px 30px;
-  font-size: 18px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 30px;
   font-weight: bold;
   cursor: pointer;
-  border-radius: 8px;
   border: none;
-  background-color: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  border: 1px solid #ccc;
+  background-color: #ff69b4; /* ホットピンク */
+  color: white;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
 
 .action-button-container {
   position: absolute;
-  bottom: 40px;
-  left: 51%;
-  bottom: 12%;
+  bottom: 35px;
+  left: 87%;
   transform: translateX(-50%);
   z-index: 100;
   text-align: center;
 }
 
 .action-button-container button {
-  padding: 12px 25px;
-  font-size: 16px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 25px;
   font-weight: bold;
   cursor: pointer;
-  border-radius: 30px;
   border: none;
   background-color: #ff69b4; /* ホットピンク */
   color: white;
