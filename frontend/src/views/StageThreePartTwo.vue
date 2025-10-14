@@ -412,7 +412,7 @@ watch(() => keysPressed.value['enter'], (isPressed, wasPressed) => {
       // A-2: 回答入力中の状態なら
       else {
         // submitAnswerを呼び出し、その結果（true/false）をisCorrectにセット
-        isCorrect.value = submitAnswer(); 
+        isCorrect.value = submitAnswer();
       }
     }
     // 【状況B】どのモーダルも表示されていない場合
@@ -590,12 +590,14 @@ function submitAnswer() {
 
 // 解説モーダルの表示
 function showExplanation() {
-    explanationText.value = explanationText.value = `その通り！指示を伝えたい相手を正確に選ぶのが、リーダーとして最も賢い方法だね。
-それが、ネットワークの賢い仕分け役、「スイッチ」の働きなんだ。
+    explanationText.value = explanationText.value = `指示を伝えたい相手を正確に選ぶのが、リーダーとして最も賢い方法だね。
 
-スイッチは、接続されている仲間全員の固有アドレス（MACアドレス）を
-記憶しているリスト（MACアドレステーブル）を持っている。
-だから、特定の仲間にだけ情報を送る（ユニキャスト）ことができるんだ。`;
+    それが、ネットワークの賢い仕分け役、「スイッチ」の働きなんだ。
+    スイッチは、例えるなら「クラスの席替えを覚えた賢い先生」のようなものなんだよ。
+
+    先生は、一度席替えをすれば「A君は一番前の席だな」「Bさんは窓際の席だな」と、全員の場所を記憶するよね。
+    だから、先生がA君だけに用事がある時、クラス全員に向かって大声で叫んだりせず、A君の席にまっすぐ行って、こっそり伝えることができる。
+    ネットワークでも全く同じで、スイッチは仲間（機器）の場所（MACアドレス）を記憶しているから、関係ない仲間を騒がせることなく、話したい相手にだけ情報を正確に届けることができるんだ。`;
 
     isExplanationModalVisible.value = true;
     isAnswerModalVisible.value = false;
