@@ -274,7 +274,7 @@ onUnmounted(() => {
   height: 33em;
 }
 .sub-chapter-overlay {
-  width: 18em;
+  width: 21em;
   height: 33em;
 }
 .story-title {
