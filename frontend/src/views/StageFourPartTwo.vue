@@ -90,10 +90,13 @@ import BackButton from "@/components/BackButton.vue";
 import { useCharacterKeymap } from "@/composable/useCharacterKeymap.js";
 import { useCharacter } from "@/composable/useReverseCharacter.js";
 import { useKeyboard } from "@/composable/useKeyboard.js";
+import { useStageClear } from "@/composable/useStageClear";
 
 // === Vue リアクティブな状態管理 ===
 const canvasContainer = ref(null);
-const answerInput = ref(null);
+const { saveClearRecord } = useStageClear(); //関数を取り出す
+const stageId = 7;
+
 
 // UIの状態
 const speechBubble = ref({ visible: false, text: "", x: 0, y: 0 });
@@ -700,6 +703,7 @@ function closeExplanation() {
 function checkAllQuizzesCompleted() {
   const allDone = reviewQuizzes.value.every(q => q.isCompleted);
   if (allDone) {
+    saveClearRecord(stageId); // クリア記録を保存
     isTransitionButtonVisible.value = true;
     alert("これにて、桃太郎の冒険は終わり。最後まで遊んでくれてありがとう！物語の追加を楽しみにしていてね！");
   }

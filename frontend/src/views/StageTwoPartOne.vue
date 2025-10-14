@@ -54,9 +54,12 @@ import { useCharacterKeymap } from "@/composable/useCharacterKeymap.js";
 import { useCharacter } from "@/composable/useCharacter.js";
 import { useKeyboard } from "@/composable/useKeyboard.js";
 import { useRouter } from 'vue-router';
+import { useStageClear } from "@/composable/useStageClear";//クリアしたときのデータ登録
 
 // === Vue リアクティブな状態管理 ===
 const canvasContainer = ref(null);
+const { saveClearRecord } = useStageClear(); //関数を取り出す
+const stageId = 2;
 
 // UIの状態
 const speechBubble = ref({ visible: false, text: "", x: 0, y: 0 });
@@ -436,6 +439,7 @@ function hideQuestionModal() {
 
 function goToStageTwoPartTwo() {
   // ★ '/stage-2-2' の部分は、実際のルート設定に合わせて変更してください
+  saveClearRecord(stageId); //クリアしたときのデータ登録
   router.push('/Stage-2-2');
 }
 </script>
@@ -443,7 +447,7 @@ function goToStageTwoPartTwo() {
 <style>
 @font-face {
   font-family: 'azuki-font';
-  /* @/ は src/ フォルダを指す便利なエイリアス（別名）です。
+  /* @/ は src/ フォルダを指す便利なエイリアス（別名）
     これを使うことで、CSSファイルがどこにあっても常に正しいパスを指定できます。
   */
   src: url('@/assets/fonts/azuki.ttf') format('truetype');
