@@ -122,9 +122,9 @@ let collisionTargetObject = null;
 // クイズ情報
 let currentQuestionIndex = 1;
 const castleLocations = [
-  { name: "192.168.10.1", location: "関所B", x: -8.8, z: -5.5, object: null },
-  { name: "192.168.20.1", location: "関所C", x: -0.1, z: -6.5, object: null },
-  { name: "192.168.30.1", location: "関所D", x: 9, z: -5, object: null },
+  { name: "192.168.10.1", location: "国境の門B", x: -8.8, z: -5.5, object: null },
+  { name: "192.168.20.1", location: "国境の門C", x: -0.1, z: -6.5, object: null },
+  { name: "192.168.30.1", location: "国境の門D", x: 9, z: -5, object: null },
 ];
 const gateLocations = [
   { x: -0.05, z: 16.3, object: null }
@@ -507,7 +507,7 @@ function updatePersistentLabels() {
 function displayQuestion() {
     const currentCastle = castleLocations[currentQuestionIndex];
 
-    questionText.value = `2-1で関所Cに行けば、港町へ辿り着けると分かったね！
+    questionText.value = `2-1で国境の門Cに行けば、港町へ辿り着けると分かったね！
     ${currentCastle.location}の住所は何かな？`;
 
     feedbackText.value = '';
