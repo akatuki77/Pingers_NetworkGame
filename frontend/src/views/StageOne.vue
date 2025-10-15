@@ -100,11 +100,13 @@ import { useCharacterKeymap } from "@/composable/useCharacterKeymap.js";
 import { useCharacter } from "@/composable/useCharacter.js";
 import { useKeyboard } from "@/composable/useKeyboard.js";
 import { useRouter } from "vue-router";
+import { useStageClear } from "@/composable/useStageClear";//クリアしたときのデータ登録
 
 // === Vue リアクティブな状態管理 ===
 const canvasContainer = ref(null);
 const answerInput = ref(null);
-
+const { saveClearRecord } = useStageClear(); //関数を取り出す
+const stageId = 1; //ステージID(2-1なら2)
 // UIの状態
 const speechBubble = ref({ visible: false, text: "", x: 0, y: 0 });
 const isAnswerModalVisible = ref(false);
@@ -322,17 +324,17 @@ watch(() => keysPressed.value['enter'], (isPressed, wasPressed) => {
 
     // 【状況A】回答モーダルが表示されている場合
     if (isAnswerModalVisible.value) {
-      
+
       // A-1: 正解して「解説を見る」ボタンが表示されている状態なら
       if (isCorrect.value) {
         showExplanation();
-      } 
+      }
       // A-2: まだ回答入力中の状態なら
       else {
         submitAnswer(); // ★ ここで回答を送信する
       }
 
-    } 
+    }
     // 【状況B】どのモーダルも表示されていない場合
     else if (!isQuestionModalVisible.value && !isExplanationModalVisible.value) {
       isAnswerModalVisible.value = true;
@@ -479,27 +481,32 @@ function hideQuestionModal() {
 }
 
 function submitAnswer() {
-    if (!userAnswer.value) return;
-    const correctAnswer = castleLocations[currentQuestionIndex].name;
-    if (userAnswer.value.trim() === correctAnswer) {
-        feedbackText.value = '正解◎';
-        feedbackColor.value = 'green';
-        isCorrect.value = true;
-    } else {
-        feedbackText.value = '不正解…もう一度考えてみよう！';
-        feedbackColor.value = 'red';
-    }
+  if (!userAnswer.value) return;
+  const correctAnswer = castleLocations[currentQuestionIndex].name;
+  if (userAnswer.value.trim() === correctAnswer) {
+    feedbackText.value = '正解◎';
+    feedbackColor.value = 'green';
+    isCorrect.value = true;
+
+    // ★ 4. 正解した瞬間に、クリア情報を保存する関数を呼び出す
+    saveClearRecord(stageId);
+
+  } else {
+    feedbackText.value = '不正解…もう一度考えてみよう！';
+    feedbackColor.value = 'red';
+  }
 }
 
 function showExplanation() {
     explanationText.value = `鍛冶の村の住所は「２丁目３番３５号」だね！
 
-実は、このお話はネットワークの世界とそっくりなんだ。
-君が操作していた桃太郎は、情報を運ぶ小さなデータ「パケット」。
-そして、目的地の「鍛冶の村」は、パケットが届けられる「宛先」なんだよ。
+    実は、君がやったことはインターネットの仕組みそのものなんだ。
+    君が操作した桃太郎は、荷物を運ぶ「宅配便のトラック」のようなもの。専門用語では「パケット」って言うんだ。
 
-手紙に住所が必要なように、パケットを正確に届けるためにも「IPアドレス」という住所が絶対に必要になるんだ。
-君が正しい住所を見つけられたから、桃太郎は鍛冶の村にたどり着けたんだね！`;
+    そして、目的地の「鍛冶の村」は、荷物の「お届け先」だね。
+    宅配便のトラックが迷わないように、荷物には必ず「お届け先の住所」が書かれたラベルが貼ってあるよね？ネットワークの世界では、その住所ラベルの役割を「IPアドレス」が果たしているんだ。
+    君が正しいIPアドレス（住所）を見つけられたから、桃太郎（トラック）は迷わず荷物を届けることができたんだね！`;
+
     isExplanationModalVisible.value = true;
     isAnswerModalVisible.value = false;
 }

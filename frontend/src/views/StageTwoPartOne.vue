@@ -54,9 +54,12 @@ import { useCharacterKeymap } from "@/composable/useCharacterKeymap.js";
 import { useCharacter } from "@/composable/useCharacter.js";
 import { useKeyboard } from "@/composable/useKeyboard.js";
 import { useRouter } from 'vue-router';
+import { useStageClear } from "@/composable/useStageClear";//クリアしたときのデータ登録
 
 // === Vue リアクティブな状態管理 ===
 const canvasContainer = ref(null);
+const { saveClearRecord } = useStageClear(); //関数を取り出す
+const stageId = 2;
 
 // UIの状態
 const speechBubble = ref({ visible: false, text: "", x: 0, y: 0 });
@@ -86,7 +89,7 @@ let collisionTargetObject = null;
 
 // クイズ情報
 const castleLocations = [
-    { name: "関所Aを通り抜けて、関所Cに行けば、港町へ辿り着けるであろう。", location: "関所Aの門番", x: 3, z: -6, object: null },
+    { name: "国境の門Aを通り抜けて、国境の門Cに行けば、港町へ辿り着けるであろう。", location: "国境の門Aの門番", x: 3, z: -6, object: null },
 ];
 let animationFrameId;
 
@@ -420,7 +423,7 @@ function updatePersistentLabels() {
 
 // === UI ロジック ===
 function displayQuestion() {
-    questionText.value = `関所Aにいる門番に港町へ辿り着ける関所の住所を教えてもらおう！`;
+    questionText.value = `国境の門Aにいる門番に港町へ辿り着ける国境の門の住所を教えてもらおう！`;
     feedbackText.value = '';
     userAnswer.value = '';
     isCorrect.value = false;
@@ -436,6 +439,7 @@ function hideQuestionModal() {
 
 function goToStageTwoPartTwo() {
   // ★ '/stage-2-2' の部分は、実際のルート設定に合わせて変更してください
+  saveClearRecord(stageId); //クリアしたときのデータ登録
   router.push('/Stage-2-2');
 }
 </script>
@@ -443,7 +447,7 @@ function goToStageTwoPartTwo() {
 <style>
 @font-face {
   font-family: 'azuki-font';
-  /* @/ は src/ フォルダを指す便利なエイリアス（別名）です。
+  /* @/ は src/ フォルダを指す便利なエイリアス（別名）
     これを使うことで、CSSファイルがどこにあっても常に正しいパスを指定できます。
   */
   src: url('@/assets/fonts/azuki.ttf') format('truetype');
