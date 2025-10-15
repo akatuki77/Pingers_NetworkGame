@@ -84,10 +84,13 @@ import { useCharacterKeymap } from "@/composable/useCharacterKeymap.js";
 import { useCharacter } from "@/composable/useCharacter.js";
 import { useKeyboard } from "@/composable/useKeyboard.js";
 import { useRouter } from 'vue-router';
+import { useStageClear } from "@/composable/useStageClear";//クリアしたときのデータ登録
 
 // === Vue リアクティブな状態管理 ===
 const canvasContainer = ref(null);
 const answerInput = ref(null);
+const { saveClearRecord } = useStageClear(); //関数を取り出す
+const stageId = 3;
 
 // UIの状態
 const speechBubble = ref({ visible: false, text: "", x: 0, y: 0 });
@@ -416,14 +419,15 @@ function animate() {
 
     if (characterHook.mixer) characterHook.mixer.update(delta);
 
-    if (characterHook.character && background) {
+    if (characterHook.character && background && backgroundBox && triggerZoneBox) {
         characterHook.updatePosition({
             delta,
             keysPressed: keysPressed.value,
             raycaster,
             collidableObjects,
             castleLocations,
-            backgroundBox
+            backgroundBox,
+            triggerZoneBox
         });
 
     const detectionRadius = 3.0; // 吹き出しを表示する半径。この値を調整してください
@@ -531,6 +535,7 @@ function submitAnswer() {
         feedbackText.value = '正解◎';
         feedbackColor.value = 'green';
         isCorrect.value = true;
+        saveClearRecord(stageId); // クリア記録を保存
     } else {
         feedbackText.value = '不正解…もう一度考えてみよう！';
         feedbackColor.value = 'red';

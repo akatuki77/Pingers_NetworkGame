@@ -1,6 +1,7 @@
 <template>
   <div class="content-page">
     <BackView />
+    <UserInfo v-if="userStore.isLoggedIn" />
     <div ref="container" class="canvas-container"></div>
     <BackButton to="/select-story" />
 
@@ -31,8 +32,12 @@
       <template v-else-if="selectedChapter">
         <ul class="sub-chapter-list">
           <li v-for="sub in selectedChapter.subChapters" :key="sub.id" @click="selectSubChapter(sub)">
-            <span>{{ sub.id }}</span>
-            <span>{{ sub.title }}</span>
+            <span v-if="isStageCleared(sub)" class="cleared-mark">〇</span>
+            <span v-else class="cleared-mark"></span>
+            <div class="sub-chapter-text">
+              <span>{{ sub.id }}</span>
+              <span>{{ sub.title }}</span>
+            </div>
           </li>
         </ul>
       </template>
@@ -53,12 +58,15 @@ import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
 import { CSS3DRenderer, CSS3DObject } from 'three/examples/jsm/renderers/CSS3DRenderer.js';
 import BackView from '@/components/BackView.vue';
 import BackButton from '@/components/BackButton.vue';
+import UserInfo from '@/components/UserInfo.vue';
+import { useUserStore } from '@/stores/userStore'; // ★ 変更点: Piniaストアをインポート
 
 // --- データとルーターの準備 ---
 const router = useRouter();
 const route = useRoute();
+const userStore = useUserStore(); // ★ 変更点: Piniaストアをインスタンス化
 
-// --- 物語データ ---
+// --- 物語データ
 const storyContent = {
   '1': {
     title: 'ももたろう',
@@ -107,6 +115,31 @@ const storyOverlay = ref(null);
 const subChapterOverlay = ref(null);
 const selectedChapter = ref(null);
 const selectedSubChapter = ref(null);
+const clearedStages = ref(new Set()); // ★ 変更点: クリア済みステージIDを保持するSet
+
+// ★ 変更点: クリア済みステージか判定する関数
+const isStageCleared = (subChapter) => {
+  return clearedStages.value.has(subChapter.stageId);
+};
+
+// ★ 変更点: クリア情報をバックエンドから取得する関数
+const fetchClearedStages = async () => {
+  // ログインしていなければ何もしない
+  if (!userStore.isLoggedIn || !userStore.user?.id) {
+    return;
+  }
+  try {
+    const response = await fetch(`http://localhost:3000/api/records/${userStore.user.id}`);
+    if (response.ok) {
+      const records = await response.json();
+      const clearedIds = records.map(record => record.stage_id);
+      clearedStages.value = new Set(clearedIds);
+    }
+  } catch (error) {
+    console.error('クリア情報の取得に失敗しました:', error);
+  }
+};
+
 
 // --- クリック処理 ---
 const selectChapter = (chapter) => {
@@ -118,7 +151,6 @@ const selectSubChapter = (subChapter) => {
   selectedSubChapter.value = subChapter;
 };
 
-// ★ 変更点: router.pushを名前付きルートに変更
 const onClickSubChapter = () => {
   if (selectedSubChapter.value && selectedSubChapter.value.routeName) {
     router.push({ name: selectedSubChapter.value.routeName });
@@ -200,7 +232,13 @@ const animate = () => {
   renderer.render(scene, camera);
   css3dRenderer.render(scene, camera);
 };
-onMounted(() => { init(); animate(); });
+
+onMounted(() => {
+  fetchClearedStages(); // ★ 変更点: マウント時にクリア情報を取得
+  init();
+  animate();
+});
+
 onUnmounted(() => {
   cancelAnimationFrame(animationId);
   window.removeEventListener('resize', onWindowResize);
@@ -236,7 +274,7 @@ onUnmounted(() => {
   height: 33em;
 }
 .sub-chapter-overlay {
-  width: 18em;
+  width: 21em;
   height: 33em;
 }
 .story-title {
@@ -301,6 +339,7 @@ onUnmounted(() => {
 }
 .sub-chapter-list li {
   display: flex;
+  align-items: center;
   gap: 0.5em;
   font-size: 1.5em;
   padding: 0.3em 0.5em;
@@ -312,8 +351,21 @@ onUnmounted(() => {
 .sub-chapter-list li:hover {
   background-color: rgba(0, 0, 0, 0.1);
 }
-.sub-chapter-list li span:first-child {
+.sub-chapter-text {
+  display: flex;
+  gap: 0.5em;
+}
+.sub-chapter-text span:first-child {
   font-weight: bold;
+}
+/* ★ 変更点: クリアマーク用のCSS */
+.cleared-mark {
+  color: #28a745;
+  font-weight: bold;
+  font-size: 1.2em;
+  width: 1.5em;
+  text-align: center;
+  flex-shrink: 0;
 }
 .synopsis-view {
   display: flex;
