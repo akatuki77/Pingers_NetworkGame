@@ -51,7 +51,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
-import { useRoute, useRouter} from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import * as THREE from 'three';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
@@ -59,14 +59,14 @@ import { CSS3DRenderer, CSS3DObject } from 'three/examples/jsm/renderers/CSS3DRe
 import BackView from '@/components/BackView.vue';
 import BackButton from '@/components/BackButton.vue';
 import UserInfo from '@/components/UserInfo.vue';
-import { useUserStore } from '@/stores/userStore'; // ★ 変更点: Piniaストアをインポート
+import { useUserStore } from '@/stores/userStore';
 
 // --- データとルーターの準備 ---
 const router = useRouter();
 const route = useRoute();
-const userStore = useUserStore(); // ★ 変更点: Piniaストアをインスタンス化
+const userStore = useUserStore();
 
-// --- 物語データ
+// --- 物語データ (ご提示いただいた内容に、クリア判定用の stageId を追加し直しました) ---
 const storyContent = {
   '1': {
     title: 'ももたろう',
@@ -76,31 +76,31 @@ const storyContent = {
         number: '第一章',
         name: '刀購入編',
         subChapters: [
-          { id: '1-1', title: '鍛冶の村へ', summary: 'まずは旅の準備だ！鬼を退治するには、「刀」と、仲間を集めるための「きびだんご」が必要だ。\n最初の目的地である「鍛冶の村」へ向かい、それらを手に入れよう！', routeName: 'Stage-1-1' },
+          { id: '1-1', stageId: 1, title: '鍛冶の村へ', summary: 'まずは旅の準備だ！鬼を退治するには、「刀」と、仲間を集めるための「きびだんご」が必要だ。\n最初の目的地である「鍛冶の村」へ向かい、それらを手に入れよう！', routeName: 'Stage-1-1' },
         ]
       },
       {
         number: '第二章',
         name: '港町編 ',
         subChapters: [
-          { id: '2-1', title: '国境の門番', summary: '刀は手に入れたが、仲間も船もない。\n村人の噂を信じて、両方が見つかるかもしれない「港町」へ！\nまずは目の前の関所を越えよう。', routeName: 'Stage-2-1' },
-          { id: '2-2', title: '国境を越えて', summary: 'よし、門番が正しい門を教えてくれた。もう迷うことはない。\n目指すは港町だ！', routeName: 'Stage-2-2' },
+          { id: '2-1', stageId: 2, title: '国境の門番', summary: '刀は手に入れたが、仲間も船もない。\n村人の噂を信じて、両方が見つかるかもしれない「港町」へ！\nまずは目の前の関所を越えよう。', routeName: 'Stage-2-1' },
+          { id: '2-2', stageId: 3, title: '国境を越えて', summary: 'よし、門番が正しい門を教えてくれた。もう迷うことはない。\n目指すは港町だ！', routeName: 'Stage-2-2' },
         ]
       },
       {
         number: '第三章',
         name: '仲間集め編 ',
         subChapters: [
-          { id: '3-1', title: 'きびだんごを配ろう', summary: '港町にはたくさんの動物がいる。鬼退治に協力してくれる仲間を探すため、\nまずはきびだんごを配って彼らと仲良くなることから始めよう！', routeName: 'Stage-3-1' },
-          { id: '3-2', title: '仲間を誘おう', summary: '鬼退治の仲間は決まったが、鬼ヶ島へ行く手段がない。\n港の漁師なら、船を出してくれるかもしれない。話を聞きに行こう！', routeName: 'Stage-3-2' },
+          { id: '3-1', stageId: 4, title: 'きびだんごを配ろう', summary: '港町にはたくさんの動物がいる。鬼退治に協力してくれる仲間を探すため、\nまずはきびだんごを配って彼らと仲良くなることから始めよう！', routeName: 'Stage-3-1' },
+          { id: '3-2', stageId: 5, title: '仲間を誘おう', summary: '鬼退治の仲間は決まったが、鬼ヶ島へ行く手段がない。\n港の漁師なら、船を出してくれるかもしれない。話を聞きに行こう！', routeName: 'Stage-3-2' },
         ]
       },
       {
         number: '第四章',
         name: '鬼ヶ島編 ',
         subChapters: [
-          { id: '4-1', title: '決戦！鬼ヶ島', summary: '仲間たちとの絆、漁師との約束。全てが揃った今、恐れるものはない。\nいざ、決戦の地「鬼ヶ島」へ！', routeName: 'Stage-4-1' },
-          { id: '4-2', title: '冒険の終わり', summary: '見事、鬼を退治した！港町に戻ると、君の帰りを祝う宴が始まっている。\nこの旅で賢くなった仲間たちが、君の知恵を試したいようだ。', routeName: 'Stage-4-2' },
+          { id: '4-1', stageId: 6, title: '決戦！鬼ヶ島', summary: '仲間たちとの絆、漁師との約束。全てが揃った今、恐れるものはない。\nいざ、決戦の地「鬼ヶ島」へ！', routeName: 'Stage-4-1' },
+          { id: '4-2', stageId: 7, title: '冒険の終わり', summary: '見事、鬼を退治した！港町に戻ると、君の帰りを祝う宴が始まっている。\nこの旅で賢くなった仲間たちが、君の知恵を試したいようだ。', routeName: 'Stage-4-2' },
         ]
       },
     ],
@@ -115,16 +115,14 @@ const storyOverlay = ref(null);
 const subChapterOverlay = ref(null);
 const selectedChapter = ref(null);
 const selectedSubChapter = ref(null);
-const clearedStages = ref(new Set()); // ★ 変更点: クリア済みステージIDを保持するSet
+const clearedStages = ref(new Set());
 
-// ★ 変更点: クリア済みステージか判定する関数
+// --- クリア状態の判定とデータ取得 ---
 const isStageCleared = (subChapter) => {
   return clearedStages.value.has(subChapter.stageId);
 };
 
-// ★ 変更点: クリア情報をバックエンドから取得する関数
 const fetchClearedStages = async () => {
-  // ログインしていなければ何もしない
   if (!userStore.isLoggedIn || !userStore.user?.id) {
     return;
   }
@@ -139,7 +137,6 @@ const fetchClearedStages = async () => {
     console.error('クリア情報の取得に失敗しました:', error);
   }
 };
-
 
 // --- クリック処理 ---
 const selectChapter = (chapter) => {
@@ -163,7 +160,7 @@ const resetSelection = () => {
   selectedChapter.value = null;
 };
 
-// --- Three.jsの準備 (変更なし) ---
+// --- Three.jsの準備 ---
 let renderer, css3dRenderer, scene, camera, model, storyLabel, subChapterLabel, animationId;
 watch(currentStory, () => { selectedChapter.value = null; });
 const init = () => {
@@ -234,7 +231,7 @@ const animate = () => {
 };
 
 onMounted(() => {
-  fetchClearedStages(); // ★ 変更点: マウント時にクリア情報を取得
+  fetchClearedStages();
   init();
   animate();
 });
@@ -358,7 +355,6 @@ onUnmounted(() => {
 .sub-chapter-text span:first-child {
   font-weight: bold;
 }
-/* ★ 変更点: クリアマーク用のCSS */
 .cleared-mark {
   color: #28a745;
   font-weight: bold;
