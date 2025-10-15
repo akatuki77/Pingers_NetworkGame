@@ -89,7 +89,7 @@ let collisionTargetObject = null;
 
 // クイズ情報
 const castleLocations = [
-    { name: "関所Aを通り抜けて、関所Cに行けば、港町へ辿り着けるであろう。", location: "関所Aの門番", x: 3, z: -6, object: null },
+    { name: "国境の門Aを通り抜けて、国境の門Cに行けば、港町へ辿り着けるであろう。", location: "国境の門Aの門番", x: 3, z: -6, object: null },
 ];
 let animationFrameId;
 
@@ -423,7 +423,7 @@ function updatePersistentLabels() {
 
 // === UI ロジック ===
 function displayQuestion() {
-    questionText.value = `関所Aにいる門番に港町へ辿り着ける関所の住所を教えてもらおう！`;
+    questionText.value = `国境の門Aにいる門番に港町へ辿り着ける国境の門の住所を教えてもらおう！`;
     feedbackText.value = '';
     userAnswer.value = '';
     isCorrect.value = false;

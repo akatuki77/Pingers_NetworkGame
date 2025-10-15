@@ -161,7 +161,7 @@ const reviewQuizzes = ref([
       "3.一番遠い場所への行き方を常に考えること", // ルータ
     ],
     correctAnswerIndex: 1, // 正解の選択肢の番号（0から数える）
-    explanation: "「正解だワン！あんた（スイッチ）が、きびだんごを渡した時に俺たちの名前（MACアドレス）を覚えてくれたから、無駄のない的確な連携ができるんだ！」",
+    explanation: "「正解だワン！リーダー（スイッチ）は、一度会った仲間の顔と名前を決して忘れないんだ。だから、他の仲間を騒がせることなく、話したい相手にだけこっそり作戦を伝えられるんだ。」",
     isCompleted: false, // このクイズをクリアしたか
   },
   {
@@ -173,7 +173,7 @@ const reviewQuizzes = ref([
       "3.仲間の中から特定の一人を探し出すこと", // スイッチ
     ],
     correctAnswerIndex: 0,
-    explanation: "「その通りです！国境の門（ルータ）は、異なるネットワークへの道案内人。あれがなければ、我々は港町にたどり着けませんでしたな。」",
+    explanation: "「その通りです！国境の門（ルータ）は、例えるなら『空港の乗り換えカウンター』のようなもの。行き先が遠い（別のネットワーク）時、『次はあちらの飛行機ですよ』と最適な次の道を案内してくれるのです。あれがなければ、我々は道に迷っていたでしょう。」",
     isCompleted: false,
   },
   {
@@ -185,7 +185,7 @@ const reviewQuizzes = ref([
       "3.世界に一つしかない、正確な『住所』", // IPアドレス（正解）
     ],
     correctAnswerIndex: 2,
-    explanation: "「お見事！正確な住所（IPアドレス）があったからこそ、桃太郎の冒険は始まったんだ！忘れるなよ、ウキッ！」",
+    explanation: "「お見事！手紙を届けるのに『住所』が絶対に必要みたいに、ネットワークの世界でも『IPアドレス』がないと何も始まらないんだ。世界に一つだけの正確な住所があったから、僕たちはあの鍛冶屋にたどり着けたんだ！忘れるなよ、ウキッ！」",
     isCompleted: false,
   },
 ]);
@@ -473,16 +473,16 @@ watch(() => keysPressed.value['enter'], (isPressed, wasPressed) => {
 
     // 【状況A】動物クイズモーダルが表示されている場合
     if (isAnimalQuizModalVisible.value) {
-      
+
       // A-1: 正解して「解説を見る」ボタンが表示されている状態なら
       if (isCorrect.value) {
         showExplanation();
-      } 
+      }
       // A-2: まだ回答入力中の状態なら
       else {
         submitAnswer();
       }
-    } 
+    }
     // 【状況B】きびだんごボタンが表示されている場合
     else if (isDangoButtonVisible.value) {
       startQuiz(); // クイズを開始
@@ -495,11 +495,11 @@ watch(() => keysPressed.value['escape'], (isPressed) => {
   if (isPressed) {
     if (isExplanationModalVisible.value) {
       closeExplanation();
-    } 
+    }
     // ★ 2. 次に「動物クイズモーダル」をチェック
     else if (isAnimalQuizModalVisible.value) {
       hideAnimalQuizModal();
-    } 
+    }
     // ★ 3. 最後に、一番下にある可能性が高い「問題文モーダル」をチェック
     else if (isQuestionModalVisible.value) {
       hideQuestionModal();

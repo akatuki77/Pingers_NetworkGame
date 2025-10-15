@@ -125,9 +125,9 @@ let collisionTargetObject = null;
 // クイズ情報
 let currentQuestionIndex = 1;
 const castleLocations = [
-  { name: "192.168.10.1", location: "関所B", x: -8.8, z: -5.5, object: null },
-  { name: "192.168.20.1", location: "関所C", x: -0.1, z: -6.5, object: null },
-  { name: "192.168.30.1", location: "関所D", x: 9, z: -5, object: null },
+  { name: "192.168.10.1", location: "国境の門B", x: -8.8, z: -5.5, object: null },
+  { name: "192.168.20.1", location: "国境の門C", x: -0.1, z: -6.5, object: null },
+  { name: "192.168.30.1", location: "国境の門D", x: 9, z: -5, object: null },
 ];
 const gateLocations = [
   { x: -0.05, z: 16.3, object: null }
@@ -511,7 +511,7 @@ function updatePersistentLabels() {
 function displayQuestion() {
     const currentCastle = castleLocations[currentQuestionIndex];
 
-    questionText.value = `2-1で関所Cに行けば、港町へ辿り着けると分かったね！
+    questionText.value = `2-1で国境の門Cに行けば、港町へ辿り着けると分かったね！
     ${currentCastle.location}の住所は何かな？`;
 
     feedbackText.value = '';
@@ -546,9 +546,12 @@ function submitAnswer() {
 function showExplanation() {
     explanationText.value = explanationText.value = `港町へ続く正しい関所の IPアドレス が分かったね！
 
-    今回の冒険では、ネットワークの道案内役 「ルータ」 の仕組みを学んだんだ。
+    今回の冒険では、インターネットの重要な案内役、「ルータ」の仕組みを体験したんだ。
+    君が通ってきた『関所』は、例えるなら「空港の乗り換えカウンター」のようなものなんだ。
 
-    君が通ってきた『関所』は、データを次の場所へと中継する「ルータ」のこと。そして、門番に正しい行き先を尋ねたあの行動が、ネットワークの世界で言う 「ルーティング」 なんだよ。`;
+    例えば、日本から遠い外国へ行く時、一度のフライトでは行けないことが多いよね？一度大きな空港で飛行機を乗り換えて、目的地へ向かうはずだ。
+    ネットワークの世界でも全く同じで、桃太郎（データ）は、関所（ルータ）で「次の飛行機はこっちですよ」と案内してもらい、別のネットワークへと乗り換えて、最終目的地の港町を目指すんだ。
+    君が正しい関所を選べたから、桃太郎は迷わず乗り換えできたんだね！`;
 
     isExplanationModalVisible.value = true;
     isAnswerModalVisible.value = false;
