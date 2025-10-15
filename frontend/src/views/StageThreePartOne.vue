@@ -32,7 +32,7 @@
     </div>
 
     <div id="key-guide">
-      <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> 移動  <kbd>Space</kbd> ジャンプ
+      <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> 移動  <kbd>Space</kbd> ジャンプ  <kbd>Shift</kbd> ダッシュ
     </div>
 
     <div v-if="isTransitionButtonVisible" class="transition-button-container">

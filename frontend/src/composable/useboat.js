@@ -51,6 +51,7 @@ export function useCharacter() {
 
     // --- 移動と前方衝突判定 ---
     const isMoving = keysPressed['arrowup'] || keysPressed['arrowdown'] || keysPressed['arrowleft'] || keysPressed['arrowright'] || keysPressed['w'] || keysPressed['a'] || keysPressed['s'] || keysPressed['d'];
+    const isShiftPressed = keysPressed['shift'];
     let hitCastleInfo = null;
 
     if(isMoving) {
@@ -136,10 +137,14 @@ export function useCharacter() {
                 }
             }
 
-            // ジャンプ中は衝突判定を緩和し、移動を優先
-            if (!isObstacleAhead && !isCliffAhead) {
-                const currentMoveSpeed = isGrounded ? moveSpeed : airMoveSpeed;
-                const moveDistance = currentMoveSpeed * delta;
+        // ジャンプ中は衝突判定を緩和し、移動を優先
+        if (!isObstacleAhead && !isCliffAhead) {
+            let currentMoveSpeed = isGrounded ? moveSpeed : airMoveSpeed;
+            // シフトキーが押されている場合は速度を2倍にする
+            if (isShiftPressed) {
+              currentMoveSpeed *= 2;
+            }
+            const moveDistance = currentMoveSpeed * delta;
 
                 // 同時押しに対応した移動ベクトルの計算
                 const moveVector = new THREE.Vector3(moveX * moveDistance, 0, moveZ * moveDistance);

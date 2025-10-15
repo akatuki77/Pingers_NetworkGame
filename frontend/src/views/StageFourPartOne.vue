@@ -32,7 +32,7 @@
     </div>
 
     <div id="key-guide">
-      <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> 移動  <kbd>Enter</kbd> 決定  <kbd>Esc</kbd> 閉じる
+      <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> 移動  <kbd>Shift</kbd> ダッシュ  <kbd>Enter</kbd> 決定  <kbd>Esc</kbd> 閉じる
     </div>
 
     <div class="oni-image-container" :class="{ hidden: !oniImageIsVisible }" @click.self="hideOniImage">
