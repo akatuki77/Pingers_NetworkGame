@@ -68,15 +68,15 @@ export function useCharacter() {
       let moveX = 0;
       let moveZ = 0;
 
-      if (keysPressed['arrowup']) moveX -= 1; // 左（X軸負方向）
-      if (keysPressed['arrowdown']) moveX += 1; // 右（X軸正方向）
-      if (keysPressed['arrowleft']) moveZ += 1; // 後（Z軸正方向）
-      if (keysPressed['arrowright']) moveZ -= 1; // 前（Z軸負方向）
+      if (keysPressed['arrowup']) moveX = -1; // 左（X軸負方向）
+      if (keysPressed['arrowdown']) moveX = +1; // 右（X軸正方向）
+      if (keysPressed['arrowleft']) moveZ = +1; // 後（Z軸正方向）
+      if (keysPressed['arrowright']) moveZ = -1; // 前（Z軸負方向）
 
-      if (keysPressed['w']) moveX -= 1; // 左（X軸負方向）
-      if (keysPressed['s']) moveX += 1; // 右（X軸正方向）
-      if (keysPressed['a']) moveZ += 1; // 後（Z軸正方向）
-      if (keysPressed['d']) moveZ -= 1; // 前（Z軸負方向）
+      if (keysPressed['w']) moveX = -1; // 左（X軸負方向）
+      if (keysPressed['s']) moveX = +1; // 右（X軸正方向）
+      if (keysPressed['a']) moveZ = +1; // 後（Z軸正方向）
+      if (keysPressed['d']) moveZ = -1; // 前（Z軸負方向）
 
       // 斜め移動の場合、速度を正規化（対角線の長さを1にする）
       if (moveX !== 0 && moveZ !== 0) {
