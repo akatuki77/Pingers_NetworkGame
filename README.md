@@ -3,10 +3,6 @@
 桃太郎を題材にしたネットワーク学習ゲームです。
 Vue 3 + Three.js のフロントエンドと Node.js + MySQL のバックエンドで構成されています。
 
-> **⚠ フロントエンドは全面リビルド中（2026-07-08〜）**
-> 旧実装は品質刷新のため完全に削除済みです。
-> 方針は `docs/rebuild-policy.md`、作業規範は `CLAUDE.md` を参照してください。
-> **M0（新スキャフォールド）完了までフロントエンドは起動できません。** バックエンドと DB は従来どおり動作します。
 
 ## クイックスタート
 
@@ -73,9 +69,3 @@ Pingers_NetworkGame/
 | frontend lint | `cd frontend && npm run lint` |
 | frontend build | `cd frontend && npm run build` |
 
-## ドキュメント
-
-- `docs/non-regression-spec.md` — 壊してはいけない仕様
-- `docs/manual-check-list.md` — 手動回帰チェックリスト
-- `docs/refactoring-roadmap.md` — リファクタリング計画（概要）
-- `docs/refactoring-plan-detailed.md` — リファクタリング計画（詳細）
