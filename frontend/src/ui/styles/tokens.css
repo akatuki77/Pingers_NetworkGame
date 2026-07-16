@@ -1,0 +1,50 @@
+/* デザイントークン — UI はゲームの世界観の一部（和風・絵本調）。
+   ブラウザ標準の素の見た目を画面に出さないための共通語彙。 */
+
+@font-face {
+  font-family: 'Zen Maru Gothic';
+  font-weight: 500;
+  src: url('../../assets/fonts/ZenMaruGothic-Medium.ttf') format('truetype');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Zen Maru Gothic';
+  font-weight: 700;
+  src: url('../../assets/fonts/ZenMaruGothic-Bold.ttf') format('truetype');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'azuki';
+  src: url('../../assets/fonts/azuki.ttf') format('truetype');
+  font-display: swap;
+}
+
+:root {
+  /* 色: 和紙と墨、桃太郎の柿色 */
+  --color-ink: #33261d;
+  --color-ink-soft: #5c4a3a;
+  --color-paper: #f8efdd;
+  --color-paper-soft: #efe2c8;
+  --color-accent: #e0662f; /* 柿色 */
+  --color-accent-strong: #c74e1b;
+  --color-leaf: #7ba23f; /* 若草 */
+  --color-gold: #d9a52c;
+  --color-sky: #6ea8dc;
+  --color-veil: #1c2a38; /* 暗転・ローディングの紺鼠 */
+  --color-danger: #b0433a;
+
+  /* 文字（可読性重視の丸ゴシック。azuki は手書き風の代替） */
+  --font-game: 'Zen Maru Gothic', 'azuki', 'Hiragino Maru Gothic ProN', 'BIZ UDGothic', sans-serif;
+
+  /* 形 */
+  --radius-panel: 14px;
+  --radius-button: 10px;
+  --shadow-panel: 0 6px 24px rgba(30, 20, 10, 0.35);
+  --shadow-button: 0 3px 0 rgba(30, 20, 10, 0.3);
+
+  /* モーション規定: standard 0.25s / emphasized 0.5s, easeOutCubic 系 */
+  --dur-standard: 0.25s;
+  --dur-emphasized: 0.5s;
+  --ease-out: cubic-bezier(0.215, 0.61, 0.355, 1);
+  --ease-in-out: cubic-bezier(0.645, 0.045, 0.355, 1);
+}

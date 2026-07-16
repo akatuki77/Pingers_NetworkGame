@@ -1,0 +1,34 @@
+/* ベーススタイル。トークンの上に載る最小限のリセットのみ。 */
+@import './tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  /* 起動直後の白画面を見せない */
+  background: var(--color-veil);
+}
+
+body {
+  font-family: var(--font-game);
+  font-weight: 500;
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+#app {
+  height: 100%;
+}
+
+button {
+  font-family: inherit;
+}
